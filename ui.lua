@@ -1,6 +1,6 @@
 -- [[
---     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.4] - TOTAL FIX
---     Hospede este script no GitHub/Pastebin e pegue o link "Raw"
+--     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.5] - OPTIMIZED
+--     FIXED: AutoShoot restored inside UI (Float button removed), Tabs Scroll, SearchBar Frame Layout
 -- ]]
 
 local Players = game:GetService("Players")
@@ -30,6 +30,7 @@ local Locales = {
             Misc = "Diversos"
         },
         Options = {
+            AutoShoot = { Title = "Atirar no Murder", Desc = "Ativa o disparo direto e silencioso no Assassino de forma automática." },
             Reach = { Title = "Alcance da Faca", Desc = "Aumenta consideravelmente o alcance de ataque com a sua faca (18 studs)." },
             ESP = { Title = "ESP Jogadores", Desc = "Destaca jogadores pelas paredes (Xerife Azul / Herói Amarelo)." },
             Speed = { Title = "Velocidade", Desc = "Aumenta a velocidade de caminhada do seu personagem para 23 de forma estável." },
@@ -54,6 +55,7 @@ local Locales = {
             Misc = "Misc"
         },
         Options = {
+            AutoShoot = { Title = "Shoot Murderer", Desc = "Enables automatic silent targeting that perfectly hits the Murderer." },
             Reach = { Title = "Knife Reach", Desc = "Significantly increases your knife attack reach (18 studs)." },
             ESP = { Title = "Player ESP", Desc = "Highlights players through walls (Sheriff Blue / Hero Yellow)." },
             Speed = { Title = "WalkSpeed", Desc = "Slightly increases player walkspeed up to 23 smoothly." },
@@ -78,6 +80,7 @@ local Locales = {
             Misc = "Varios"
         },
         Options = {
+            AutoShoot = { Title = "Disparar al Asesino", Desc = "Activa el disparo silencioso automático directo al asesino." },
             Reach = { Title = "Alcance del Cuchillo", Desc = "Aumenta considerablemente el alcance de ataque com tu cuchillo." },
             ESP = { Title = "ESP Jogadores", Desc = "Resalta jogadores por rol (Sheriff Azul / Héroe Amarillo)." },
             Speed = { Title = "Velocidad", Desc = "Aumenta la velocidad del personagem a 23 de forma fluida." },
@@ -237,7 +240,7 @@ subtitle.Name = "Subtitle"
 subtitle.Size = UDim2.new(0, 200, 0, 14)
 subtitle.Position = UDim2.new(0, 16, 0, 28)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = "MM2 SCRIPT [BETA v3.4]"
+subtitle.Text = "MM2 SCRIPT [BETA v3.5]"
 subtitle.TextColor3 = Color3.fromHex("#8B0000")
 subtitle.TextSize = 10
 subtitle.Font = Enum.Font.Gotham
@@ -247,7 +250,7 @@ subtitle.ZIndex = 6
 local searchBarFrame = Instance.new("Frame", topBar)
 searchBarFrame.Name = "SearchBarFrame"
 searchBarFrame.AnchorPoint = Vector2.new(1, 0.5)
-searchBarFrame.Position = UDim2.new(1, -144, 0.5, 0)
+searchBarFrame.Position = UDim2.new(1, -148, 0.5, 0)
 searchBarFrame.Size = UDim2.new(0, 0, 0, 26)
 searchBarFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 searchBarFrame.ClipsDescendants = true
@@ -389,7 +392,7 @@ div.BackgroundColor3 = Color3.fromHex("#121212")
 div.BorderSizePixel = 0
 div.ZIndex = 6
 
--- [SIDEBAR] (Ajustado posição de 53 para 52 para matar a linha preta de bug)
+-- [SIDEBAR]
 local SidebarFrame = Instance.new("Frame", mainFrame)
 SidebarFrame.Name = "SidebarFrame"
 SidebarFrame.Size = UDim2.new(0, 140, 1, -52)
@@ -413,16 +416,19 @@ ProfileDiv.BackgroundColor3 = Color3.fromHex("#121212")
 ProfileDiv.BorderSizePixel = 0
 ProfileDiv.ZIndex = 6
 
+-- [TABS CONTAINER - EFEITO DE ROLAGEM NORMAL E SUTIL]
 local TabsContainer = Instance.new("ScrollingFrame", SidebarFrame)
 TabsContainer.Name = "TabsContainer"
 TabsContainer.Size = UDim2.new(1, 0, 1, -75)
 TabsContainer.Position = UDim2.new(0, 0, 0, 0)
 TabsContainer.BackgroundTransparency = 1
 TabsContainer.BorderSizePixel = 0
-TabsContainer.ScrollBarThickness = 0
 TabsContainer.ZIndex = 7
 TabsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-TabsContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+TabsContainer.ElasticBehavior = Enum.ElasticBehavior.Always
+TabsContainer.ScrollBarThickness = 3
+TabsContainer.ScrollBarImageColor3 = Color3.fromRGB(139, 0, 0)
+TabsContainer.ScrollBarImageTransparency = 0.4
 pcall(function() TabsContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y end)
 
 local TabsLayout = Instance.new("UIListLayout", TabsContainer)
@@ -484,10 +490,11 @@ togglesContainer.Size = UDim2.new(1, -156, 1, -66)
 togglesContainer.Position = UDim2.new(0, 148, 0, 58)
 togglesContainer.BackgroundTransparency = 1
 togglesContainer.BorderSizePixel = 0
-togglesContainer.ScrollBarThickness = 0
+togglesContainer.ScrollBarThickness = 3
+togglesContainer.ScrollBarImageColor3 = Color3.fromRGB(139, 0, 0)
 togglesContainer.ZIndex = 6
 togglesContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-togglesContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+togglesContainer.ElasticBehavior = Enum.ElasticBehavior.Always
 pcall(function() togglesContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y end)
 
 local containerLayout = Instance.new("UIListLayout", togglesContainer)
@@ -757,7 +764,7 @@ local function createTabBtn(tabName)
     activeBar.BackgroundColor3 = Color3.fromHex("#8B0000")
     activeBar.BorderSizePixel = 0
     activeBar.Visible = false
-    activeBar.ZIndex = 12 -- Elevado para cobrir perfeitamente qualquer artefato ou linha indesejada
+    activeBar.ZIndex = 12 
 
     CriarIconeProcedural(tabBtn, tabName)
     local tabLabel = Instance.new("TextLabel", tabBtn)
@@ -861,7 +868,7 @@ local function createToggle(parent, configKey, tabCategory)
         TweenService:Create(switchCircle, anim, {Position = targetPos}):Play()
         TweenService:Create(switchTrack, anim, {BackgroundColor3 = targetColor}):Play()
         
-        -- EXECUTA A FUNÇÃO DE LÓGICA PELO BRIDGE GLOBAL
+        -- EXECUTA APENAS A LÓGICA PELO BRIDGE GLOBAL (SEM CRIAR BOTÃO FLUTUANTE ADICIONAL)
         if _G.AkatCallbacks and _G.AkatCallbacks[configKey] then
             task.spawn(_G.AkatCallbacks[configKey], Configs[configKey])
         end
@@ -920,15 +927,14 @@ local function executarMinimizacao()
     isMinimized = not isMinimized
     local windowAnim = TweenInfo.new(0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     
-    -- Animação Sincronizada e inteligente para sumir com Idioma e Lupa
     if isMinimized then
-        if searchOpen then
-            searchOpen = false
-            searchTextBox.Text = ""
-            TweenService:Create(searchBarFrame, windowAnim, {Size = UDim2.new(0, 0, 0, 26)}):Play()
-            searchTextBox:ReleaseFocus()
-            filterToggles(activeTab, "")
-        end
+        -- MELHORIA DA POSIÇÃO DA LINHA DE PESQUISA: Reseta e oculta perfeitamente para não quebrar o layout
+        searchOpen = false
+        searchTextBox.Text = ""
+        searchBarFrame.Visible = false
+        TweenService:Create(searchBarFrame, windowAnim, {Size = UDim2.new(0, 0, 0, 26)}):Play()
+        searchTextBox:ReleaseFocus()
+        filterToggles(activeTab, "")
 
         TweenService:Create(LanguageBtn, windowAnim, {Size = UDim2.new(0, 0, 0, 26), BackgroundTransparency = 1, TextTransparency = 1}):Play()
         TweenService:Create(SearchBtn, windowAnim, {Size = UDim2.new(0, 0, 0, 26), BackgroundTransparency = 1}):Play()
@@ -954,6 +960,7 @@ local function executarMinimizacao()
         togglesContainer.Visible = true
         LanguageBtn.Visible = true
         SearchBtn.Visible = true
+        searchBarFrame.Visible = true
 
         TweenService:Create(LanguageBtn, windowAnim, {Size = UDim2.new(0, 26, 0, 26), BackgroundTransparency = 0, TextTransparency = 0}):Play()
         TweenService:Create(SearchBtn, windowAnim, {Size = UDim2.new(0, 26, 0, 26), BackgroundTransparency = 0}):Play()
@@ -970,7 +977,6 @@ local function executarMinimizacao()
 end
 
 local function alternarVisibilidadeMenu()
-    -- SOLUÇÃO INTELIGENTE DO BORRÃO: Se fechar o menu enquanto a confirmação estiver aberta, desativa o blur imediatamente
     if isConfirmOpen then
         AlternarConfirmacao(false)
     end
@@ -1135,7 +1141,8 @@ createTabBtn("Movement")
 createTabBtn("Teleports")
 createTabBtn("Misc")
 
--- Modificações: Removido por completo o botão e o toggle do Auto Shoot
+-- ADICIONADO DE VOLTA: AutoShoot ativo apenas dentro do menu, sem botão flutuante
+createToggle(togglesContainer, "AutoShoot",   "Combat")
 createToggle(togglesContainer, "Reach",       "Combat")
 createToggle(togglesContainer, "ESP",         "Visuals")
 createToggle(togglesContainer, "Speed",       "Movement")
@@ -1149,6 +1156,7 @@ createToggle(togglesContainer, "ChatRoles",   "Misc")
 AtualizarIdioma()
 
 SearchBtn.MouseButton1Click:Connect(function()
+    if isMinimized then return end
     searchOpen = not searchOpen
     local info = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     if searchOpen then
@@ -1168,7 +1176,7 @@ end)
 
 local languageTransitioning = false
 LanguageBtn.MouseButton1Click:Connect(function()
-    if languageTransitioning then return end
+    if languageTransitioning or isMinimized then return end
     languageTransitioning = true
     
     AplicarFadeIdiomaModerno(true, 0.14)
@@ -1192,6 +1200,7 @@ CloseBtn.MouseButton1Click:Connect(function()
         div.Visible = true
         SidebarFrame.Visible = true
         togglesContainer.Visible = true
+        searchBarFrame.Visible = true
         AplicarFadeSincronizado(SidebarFrame, false, 0.15)
         AplicarFadeSincronizado(togglesContainer, false, 0.15)
         TweenService:Create(mainWrapper, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 520, 0, 300)}):Play()
