@@ -1,5 +1,5 @@
 -- [[
---     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.2]
+--     AKAT SCRIPT - UNIVERSAL DYNAMIC UI COMPONENT [v3.5]
 --     Hospede este script no GitHub/Pastebin e pegue o link "Raw"
 -- ]]
 
@@ -16,19 +16,14 @@ local mouse = player:GetMouse()
 -- Recupera as configurações globais criadas pelo Script de Lógica
 local Configs = _G.Configs or {}
 
-local Locales = {
+-- ==================== SISTEMA DE CARGA DINÂMICA (FALLBACK MM2) ====================
+local DefaultLocales = {
     PT = {
         SearchPlaceholder = "Pesquisar...",
         ConfirmCloseTitle = "Deseja fechar o script?",
         ConfirmBtn = "Confirmar",
         CancelBtn = "Cancelar",
-        Tabs = {
-            Combat = "Combate",
-            Visuals = "Visuais",
-            Movement = "Movimento",
-            Teleports = "Teleportes",
-            Misc = "Diversos"
-        },
+        Tabs = { Combat = "Combate", Visuals = "Visuais", Movement = "Movimento", Teleports = "Teleportes", Misc = "Diversos" },
         Options = {
             AutoShoot = { Title = "Atirar no Murder", Desc = "Ativa o botão flutuante de disparo direto e silencioso no Assassino." },
             Reach = { Title = "Alcance da Faca", Desc = "Aumenta consideravelmente o alcance de ataque com a sua faca (18 studs)." },
@@ -47,13 +42,7 @@ local Locales = {
         ConfirmCloseTitle = "Do you want to close the script?",
         ConfirmBtn = "Confirm",
         CancelBtn = "Cancel",
-        Tabs = {
-            Combat = "Combat",
-            Visuals = "Visuals",
-            Movement = "Movement",
-            Teleports = "Teleports",
-            Misc = "Misc"
-        },
+        Tabs = { Combat = "Combat", Visuals = "Visuals", Movement = "Movement", Teleports = "Teleports", Misc = "Misc" },
         Options = {
             AutoShoot = { Title = "Shoot Murderer", Desc = "Enables a floating shoot button that perfectly hits the Murderer." },
             Reach = { Title = "Knife Reach", Desc = "Significantly increases your knife attack reach (18 studs)." },
@@ -66,36 +55,16 @@ local Locales = {
             ChatRoles = { Title = "Reveal Roles", Desc = "Sends a message in chat revealing active roles." }
         },
         Intro = '<font color="#FFFFFF">Scripts by | </font><font color="#8B0000">AKAT Community</font>'
-    },
-    ES = {
-        SearchPlaceholder = "Buscar...",
-        ConfirmCloseTitle = "¿Deseas cerrar el script?",
-        ConfirmBtn = "Confirmar",
-        CancelBtn = "Cancelar",
-        Tabs = {
-            Combat = "Combate",
-            Visuales = "Visuales",
-            Movement = "Movimiento",
-            Teleports = "Teleportes",
-            Misc = "Varios"
-        },
-        Options = {
-            AutoShoot = { Title = "Disparar al Asesino", Desc = "Activa un botón flotante para disparar directo al asesino." },
-            Reach = { Title = "Alcance del Cuchillo", Desc = "Aumenta considerablemente el alcance de ataque con tu cuchillo." },
-            ESP = { Title = "ESP Jogadores", Desc = "Resalta jogadores por rol (Sheriff Azul / Héroe Amarillo)." },
-            Speed = { Title = "Velocidad", Desc = "Aumenta la velocidad del personagem a 23 de forma fluida." },
-            AntiFling = { Title = "Anti-Fling", Desc = "Bloqueia colisiones para evitar que te empujen o lancen." },
-            TpToGun = { Title = "TP a la Arma", Desc = "Teletransporta a la pistola tirada (Inocentes solamente)." },
-            SafeSpot = { Title = "Lugar Seguro", Desc = "Te teletransporta a una plataforma invisible en el cielo." },
-            AutoCollect = { Title = "Auto Monedas", Desc = "Se mueve continuamente recolectando monedas de forma rápida." },
-            ChatRoles = { Title = "Revelar Roles", Desc = "Envía en el chat quién es el Asesino y el Sheriff." }
-        },
-        Intro = '<font color="#FFFFFF">Scripts por | </font><font color="#8B0000">Comunidad AKAT</font>'
     }
 }
 
+-- Se o backend enviou dados, usa eles. Se não, usa o MM2 padrão.
+local Locales = (_G.UIData and _G.UIData.Locales) or DefaultLocales
+local MenuTitleText = (_G.UIData and _G.UIData.Title) or "AKAT SCRIPTS"
+local MenuSubtitleText = (_G.UIData and _G.UIData.Subtitle) or "MM2 SCRIPT [BETA v3.2]"
+
 local currentLanguage = "EN"
-local activeTab = "Combat"
+local activeTab = ""
 local tabButtons = {}
 local menuAberto = true
 local isMinimized = false
@@ -219,7 +188,7 @@ end)
 local asBtnText = Instance.new("TextButton", AutoShootMobileBtn)
 asBtnText.Size = UDim2.new(1, 0, 1, 0)
 asBtnText.BackgroundTransparency = 1
-asBtnText.Text = "Auto Shoot"
+asBtnText.Text = "Auto Action"
 asBtnText.TextColor3 = Color3.fromRGB(255, 255, 255)
 asBtnText.Font = Enum.Font.GothamBold
 asBtnText.TextSize = 12
@@ -236,6 +205,8 @@ asBtnText.MouseButton1Click:Connect(function()
 
     if _G.AkatCallbacks and _G.AkatCallbacks.FireShoot then
         _G.AkatCallbacks.FireShoot()
+    elseif _G.AkatCallbacks and _G.AkatCallbacks.CustomAction then
+        _G.AkatCallbacks.CustomAction()
     end
 end)
 
@@ -288,7 +259,7 @@ title.Name = "Title"
 title.Size = UDim2.new(0, 200, 0, 22)
 title.Position = UDim2.new(0, 16, 0, 10)
 title.BackgroundTransparency = 1
-title.Text = "AKAT SCRIPTS"
+title.Text = MenuTitleText
 title.TextColor3 = Color3.fromHex("#8B0000")
 title.TextSize = 16
 title.Font = Enum.Font.GothamBold
@@ -300,7 +271,7 @@ subtitle.Name = "Subtitle"
 subtitle.Size = UDim2.new(0, 200, 0, 14)
 subtitle.Position = UDim2.new(0, 16, 0, 28)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = "MM2 SCRIPT [BETA v3.2]"
+subtitle.Text = MenuSubtitleText
 subtitle.TextColor3 = Color3.fromHex("#8B0000")
 subtitle.TextSize = 10
 subtitle.Font = Enum.Font.Gotham
@@ -693,16 +664,19 @@ local function CriarIconeProcedural(parent, tabName)
     imageLabel.BackgroundTransparency = 1
     imageLabel.ZIndex = 10
     imageLabel.ImageColor3 = Color3.fromRGB(180, 180, 180)
-    if tabName == "Movement" then
+    
+    if tabName == "Movement" or tabName == "Movimento" then
         imageLabel.Image = "rbxthumb://type=Asset&id=116118153718196&w=150&h=150"
-    elseif tabName == "Teleports" then
+    elseif tabName == "Teleports" or tabName == "Teleportes" then
         imageLabel.Image = "rbxthumb://type=Asset&id=131357413318360&w=150&h=150"
-    elseif tabName == "Misc" then
+    elseif tabName == "Misc" or tabName == "Diversos" or tabName == "Varios" then
         imageLabel.Image = "rbxthumb://type=Asset&id=96954032676031&w=150&h=150"
-    elseif tabName == "Visuals" then
+    elseif tabName == "Visuals" or tabName == "Visuales" or tabName == "Visuais" then
         imageLabel.Image = "rbxthumb://type=Asset&id=134099134229815&w=150&h=150"
-    elseif tabName == "Combat" then
+    elseif tabName == "Combat" or tabName == "Combate" then
         imageLabel.Image = "rbxthumb://type=Asset&id=131607049070859&w=150&h=150"
+    else
+        imageLabel.Image = "rbxthumb://type=Asset&id=96954032676031&w=150&h=150" -- Icone Fallback Padrão
     end
 end
 
@@ -722,15 +696,15 @@ end
 local function AtualizarIdioma()
     local langData = Locales[currentLanguage]
     if not langData then return end
-    searchTextBox.PlaceholderText = langData.SearchPlaceholder
+    searchTextBox.PlaceholderText = langData.SearchPlaceholder or "Search..."
     for tabName, btn in pairs(tabButtons) do
         local label = btn:FindFirstChild("Label")
-        if label then label.Text = langData.Tabs[tabName] or tabName end
+        if label then label.Text = (langData.Tabs and langData.Tabs[tabName]) or tabName end
     end
     for _, child in ipairs(togglesContainer:GetChildren()) do
         if child:IsA("Frame") and child.Name ~= "UIListLayout" and child.Name ~= "UIPadding" then
             local configKey = child:GetAttribute("ConfigKey")
-            if configKey and langData.Options[configKey] then
+            if configKey and langData.Options and langData.Options[configKey] then
                 local titleLabel = child:FindFirstChild("Title")
                 local descLabel  = child:FindFirstChild("Description")
                 if titleLabel then titleLabel.Text = langData.Options[configKey].Title end
@@ -738,9 +712,9 @@ local function AtualizarIdioma()
             end
         end
     end
-    confirmLabel.Text = langData.ConfirmCloseTitle
-    btnYes.Text = langData.ConfirmBtn
-    btnNo.Text  = langData.CancelBtn
+    confirmLabel.Text = langData.ConfirmCloseTitle or "Close?"
+    btnYes.Text = langData.ConfirmBtn or "Yes"
+    btnNo.Text  = langData.CancelBtn or "No"
 end
 
 local function filterToggles(currentActiveTab, query)
@@ -929,8 +903,8 @@ local function createToggle(parent, configKey, tabCategory)
         end
 
         -- Atualização interna da interface
-        if configKey == "AutoShoot" then
-            AutoShootMobileBtn.Visible = Configs.AutoShoot
+        if configKey == "AutoShoot" or configKey == "ActiveSlow" then
+            AutoShootMobileBtn.Visible = Configs[configKey]
         end
     end)
 end
@@ -1060,7 +1034,7 @@ local function ExecutarIntroAkat()
     IntroText.Font = Enum.Font.GothamBold
     IntroText.TextSize = 26
     IntroText.RichText = true
-    IntroText.Text = Locales[currentLanguage].Intro
+    IntroText.Text = Locales[currentLanguage].Intro or "AKAT HUB"
     IntroText.TextTransparency = 1
     IntroText.ZIndex = 501
 
@@ -1118,7 +1092,7 @@ local function ExecutarIntroAkat()
     AplicarFadeSincronizado(mainWrapper, false, 0.12)
     local openTween = TweenService:Create(mainWrapper, fastOpen, {Size = UDim2.new(0, 520, 0, 300)})
     openTween:Play()
-    openTween.Completed:Connect(function() selectTab("Combat") end)
+    openTween.Completed:Connect(function() selectTab(activeTab) end)
 end
 
 local function AplicarEfeitoFisicoBotao(btn, hoverColor)
@@ -1157,21 +1131,40 @@ AplicarEfeitoFisicoBotao(SearchBtn, Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(MinimizeBtn, Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(CloseBtn, Color3.fromRGB(255, 60, 60))
 
-createTabBtn("Combat")
-createTabBtn("Visuals")
-createTabBtn("Movement")
-createTabBtn("Teleports")
-createTabBtn("Misc")
 
-createToggle(togglesContainer, "AutoShoot",   "Combat")
-createToggle(togglesContainer, "Reach",       "Combat")
-createToggle(togglesContainer, "ESP",         "Visuals")
-createToggle(togglesContainer, "Speed",       "Movement")
-createToggle(togglesContainer, "AntiFling",   "Movement")
-createToggle(togglesContainer, "TpToGun",     "Teleports")
-createToggle(togglesContainer, "SafeSpot",    "Teleports")
-createToggle(togglesContainer, "AutoCollect", "Misc")
-createToggle(togglesContainer, "ChatRoles",   "Misc")
+-- ==================== CONSTRUTOR DINÂMICO DE ELEMENTOS ====================
+local tabsCriadas = {}
+
+if _G.UIData and _G.UIData.Toggles then
+    -- Geração Dinâmica Baseada no Novo Script
+    for _, item in ipairs(_G.UIData.Toggles) do
+        if not tabsCriadas[item.Tab] then
+            createTabBtn(item.Tab)
+            tabsCriadas[item.Tab] = true
+            if activeTab == "" then activeTab = item.Tab end
+        end
+        createToggle(togglesContainer, item.Key, item.Tab)
+    end
+else
+    -- Fallback de Segurança (Mantém o MM2 ativo por padrão se executado puro)
+    activeTab = "Combat"
+    createTabBtn("Combat")
+    createTabBtn("Visuals")
+    createTabBtn("Movement")
+    createTabBtn("Teleports")
+    createTabBtn("Misc")
+
+    createToggle(togglesContainer, "AutoShoot",   "Combat")
+    createToggle(togglesContainer, "Reach",       "Combat")
+    createToggle(togglesContainer, "ESP",         "Visuals")
+    createToggle(togglesContainer, "Speed",       "Movement")
+    createToggle(togglesContainer, "AntiFling",   "Movement")
+    createToggle(togglesContainer, "TpToGun",     "Teleports")
+    createToggle(togglesContainer, "SafeSpot",    "Teleports")
+    createToggle(togglesContainer, "AutoCollect", "Misc")
+    createToggle(togglesContainer, "ChatRoles",   "Misc")
+end
+
 
 local searchOpen = false
 SearchBtn.MouseButton1Click:Connect(function()
