@@ -1,6 +1,6 @@
 -- [[
---     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.5] - OPTIMIZED
---     FIXED: AutoShoot restored inside UI (Float button removed), Tabs Scroll, SearchBar Frame Layout
+--     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.6] - OPTIMIZED
+--     FIXED: No Elastic Scroll (Chiclete), Thinner Scrollbar, Drag Anywhere System
 -- ]]
 
 local Players = game:GetService("Players")
@@ -122,12 +122,13 @@ if uiParent:FindFirstChild("DeltaAkatUniversalUI") then
 end
 screenGui.Parent = uiParent
 
--- Função de Arrastar com suporte a gatilhos Mobile
-local function ConfigurarArrastarAkat(inst, trigger)
-    trigger = trigger or inst
+-- Função de Arrastar Avançada (Permite arrastar por QUALQUER parte que não seja um botão/input)
+local function ConfigurarArrastarAkat(inst, root)
+    root = root or inst
     local drag = false
     local startPos, dragStart, dragInput
-    trigger.InputBegan:Connect(function(input)
+    
+    local function onInputBegan(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             drag = true
             dragStart = input.Position
@@ -141,7 +142,24 @@ local function ConfigurarArrastarAkat(inst, trigger)
                 end
             end)
         end
-    end)
+    end
+    
+    local function bindTrigger(obj)
+        if obj:IsA("GuiObject") and not (obj:IsA("TextButton") or obj:IsA("ImageButton") or obj:IsA("ScrollingFrame") or obj:IsA("TextBox")) then
+            obj.InputBegan:Connect(onInputBegan)
+        end
+    end
+    
+    if root == inst and root:IsA("ImageButton") then
+        root.InputBegan:Connect(onInputBegan)
+    else
+        bindTrigger(root)
+        for _, descendant in ipairs(root:GetDescendants()) do
+            bindTrigger(descendant)
+        end
+        root.DescendantAdded:Connect(bindTrigger)
+    end
+    
     UserInputService.InputChanged:Connect(function(input)
         if drag and input == dragInput and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
@@ -416,7 +434,7 @@ ProfileDiv.BackgroundColor3 = Color3.fromHex("#121212")
 ProfileDiv.BorderSizePixel = 0
 ProfileDiv.ZIndex = 6
 
--- [TABS CONTAINER - EFEITO DE ROLAGEM NORMAL E SUTIL]
+-- [TABS CONTAINER - SEM EFEITO ELÁSTICO / BARRA MAIS FINA]
 local TabsContainer = Instance.new("ScrollingFrame", SidebarFrame)
 TabsContainer.Name = "TabsContainer"
 TabsContainer.Size = UDim2.new(1, 0, 1, -75)
@@ -425,8 +443,8 @@ TabsContainer.BackgroundTransparency = 1
 TabsContainer.BorderSizePixel = 0
 TabsContainer.ZIndex = 7
 TabsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-TabsContainer.ElasticBehavior = Enum.ElasticBehavior.Always
-TabsContainer.ScrollBarThickness = 3
+TabsContainer.ElasticBehavior = Enum.ElasticBehavior.Never
+TabsContainer.ScrollBarThickness = 2
 TabsContainer.ScrollBarImageColor3 = Color3.fromRGB(139, 0, 0)
 TabsContainer.ScrollBarImageTransparency = 0.4
 pcall(function() TabsContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y end)
@@ -484,17 +502,18 @@ UsernameLabel.TextXAlignment = Enum.TextXAlignment.Left
 UsernameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 UsernameLabel.ZIndex = 8
 
+-- [TOGGLES CONTAINER - SEM EFEITO ELÁSTICO / BARRA MAIS FINA]
 local togglesContainer = Instance.new("ScrollingFrame", mainFrame)
 togglesContainer.Name = "TogglesContainer"
 togglesContainer.Size = UDim2.new(1, -156, 1, -66)
 togglesContainer.Position = UDim2.new(0, 148, 0, 58)
 togglesContainer.BackgroundTransparency = 1
 togglesContainer.BorderSizePixel = 0
-togglesContainer.ScrollBarThickness = 3
+togglesContainer.ScrollBarThickness = 2
 togglesContainer.ScrollBarImageColor3 = Color3.fromRGB(139, 0, 0)
 togglesContainer.ZIndex = 6
 togglesContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-togglesContainer.ElasticBehavior = Enum.ElasticBehavior.Always
+togglesContainer.ElasticBehavior = Enum.ElasticBehavior.Never
 pcall(function() togglesContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y end)
 
 local containerLayout = Instance.new("UIListLayout", togglesContainer)
@@ -1250,8 +1269,9 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
-ConfigurarArrastarAkat(mainWrapper)
-ConfigurarArrastarAkat(FloatBtn)
+-- Ativação do Arrastar Universal na Janela Principal e no Botão Flutuante
+ConfigurarArrastarAkat(mainWrapper, mainFrame)
+ConfigurarArrastarAkat(FloatBtn, FloatBtn)
 
 task.spawn(function()
     task.wait(0.1)
