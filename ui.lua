@@ -1,5 +1,6 @@
 -- [[
---     AKAT SCRIPT - UNIVERSAL DYNAMIC UI COMPONENT [v4.0 GLOBAL]
+--     AKAT SCRIPT - UNIVERSAL DYNAMIC UI COMPONENT [v4.0]
+--     Hospede este script no GitHub/Pastebin e pegue o link "Raw"
 -- ]]
 
 local Players = game:GetService("Players")
@@ -9,19 +10,105 @@ local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 
 local player = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local mouse = player:GetMouse()
+
+-- Recupera as configurações de callbacks globais criadas pelo Script de Lógica
 local Configs = _G.Configs or {}
 
--- Sistema Global: Usa o que o script injetado mandar ou adota termos universais básicos
-local Locales = (_G.UIData and _G.UIData.Locales) or {
-    PT = { SearchPlaceholder = "Pesquisar...", ConfirmCloseTitle = "Fechar Script?", ConfirmBtn = "Confirmar", CancelBtn = "Cancelar" },
-    EN = { SearchPlaceholder = "Search...", ConfirmCloseTitle = "Close Script?", ConfirmBtn = "Confirm", CancelBtn = "Cancel" }
+-- [ESTRUTURA DE CORREÇÃO E FALLBACK SE _G.UIData NÃO EXISTIR]
+local defaultStructure = {
+    Subtitle = "UNIVERSAL HUB [V3.2]",
+    MenuStructure = {
+        { TabKey = "Combat", Toggles = {"AutoShoot", "Reach"} },
+        { TabKey = "Visuals", Toggles = {"ESP"} },
+        { TabKey = "Movement", Toggles = {"Speed", "AntiFling"} },
+        { TabKey = "Teleports", Toggles = {"TpToGun", "SafeSpot"} },
+        { TabKey = "Misc", Toggles = {"AutoCollect", "ChatRoles"} }
+    }
 }
 
-local MenuTitleText = (_G.UIData and _G.UIData.Title) or "AKAT HUB"
-local MenuSubtitleText = (_G.UIData and _G.UIData.Subtitle) or "Universal Engine 2026"
+-- Locales base com suporte padrão (MM2 Fallback)
+local Locales = {
+    PT = {
+        SearchPlaceholder = "Pesquisar...",
+        ConfirmCloseTitle = "Deseja fechar o script?",
+        ConfirmBtn = "Confirmar",
+        CancelBtn = "Cancelar",
+        Tabs = { Combat = "Combate", Visuals = "Visuais", Movement = "Movimento", Teleports = "Teleportes", Misc = "Diversos" },
+        Options = {
+            AutoShoot = { Title = "Atirar no Murder", Desc = "Ativa o botão flutuante de disparo direto e silencioso no Assassino." },
+            Reach = { Title = "Alcance da Faca", Desc = "Aumenta consideravelmente o alcance de ataque com a sua faca (18 studs)." },
+            ESP = { Title = "ESP Jogadores", Desc = "Destaca jogadores pelas paredes (Xerife Azul / Herói Amarelo)." },
+            Speed = { Title = "Velocidade", Desc = "Aumenta a velocidade de caminhada do seu personagem para 23 de forma estável." },
+            AntiFling = { Title = "Anti-Arremesso", Desc = "Bloqueia colisões que tentem te empurrar ou arremessar." },
+            TpToGun = { Title = "Teleportar p/ Arma", Desc = "Inocentes se teleportam para a arma dropada (Ignorado se você for Murder)." },
+            SafeSpot = { Title = "Lugar Seguro", Desc = "Cria uma plataforma invisível no céu para ficar totalmente seguro." },
+            AutoCollect = { Title = "Coletar Moedas", Desc = "Coleta moedas continuamente em alta velocidade sem pausas lentas." },
+            ChatRoles = { Title = "Revelar Funções", Desc = "Envia no chat quem é o Assassino e o Xerife." }
+        }
+    },
+    EN = {
+        SearchPlaceholder = "Search...",
+        ConfirmCloseTitle = "Do you want to close the script?",
+        ConfirmBtn = "Confirm",
+        CancelBtn = "Cancel",
+        Tabs = { Combat = "Combat", Visuals = "Visuals", Movement = "Movement", Teleports = "Teleports", Misc = "Misc" },
+        Options = {
+            AutoShoot = { Title = "Shoot Murderer", Desc = "Enables a floating shoot button that perfectly hits the Murderer." },
+            Reach = { Title = "Knife Reach", Desc = "Significantly increases your knife attack reach (18 studs)." },
+            ESP = { Title = "Player ESP", Desc = "Highlights players through walls (Sheriff Blue / Hero Yellow)." },
+            Speed = { Title = "WalkSpeed", Desc = "Slightly increases player walkspeed up to 23 smoothly." },
+            AntiFling = { Title = "Anti-Fling", Desc = "Disables collisions to prevent other players from flinging you." },
+            TpToGun = { Title = "TP to Gun", Desc = "Teleports to dropped gun (Automatically disabled for the Murderer)." },
+            SafeSpot = { Title = "Safe Spot", Desc = "Teleports you to an invisible sky platform to remain completely safe." },
+            AutoCollect = { Title = "Auto Collect", Desc = "Smoothly collects coins continuously without clunky visual stops." },
+            ChatRoles = { Title = "Reveal Roles", Desc = "Sends a message in chat revealing active roles." }
+        }
+    },
+    ES = {
+        SearchPlaceholder = "Buscar...",
+        ConfirmCloseTitle = "¿Deseas cerrar el script?",
+        ConfirmBtn = "Confirmar",
+        CancelBtn = "Cancelar",
+        Tabs = { Combat = "Combate", Visuales = "Visuales", Movement = "Movimiento", Teleports = "Teleportes", Misc = "Varios" },
+        Options = {
+            AutoShoot = { Title = "Disparar al Asesino", Desc = "Activa un botão flotante para disparar directo al asesino." },
+            Reach = { Title = "Alcance del Cuchillo", Desc = "Aumenta considerablemente el alcance de ataque con tu cuchillo." },
+            ESP = { Title = "ESP Jogadores", Desc = "Resalta jogadores por rol (Sheriff Azul / Héroe Amarillo)." },
+            Speed = { Title = "Velocidad", Desc = "Aumenta la velocidad del personagem a 23 de forma fluida." },
+            AntiFling = { Title = "Anti-Fling", Desc = "Bloqueia colisiones para evitar que te empujen o lancen." },
+            TpToGun = { Title = "TP a la Arma", Desc = "Teletransporta a la pistola tirada (Inocentes solamente)." },
+            SafeSpot = { Title = "Lugar Seguro", Desc = "Te teletransporta a una plataforma invisible en el cielo." },
+            AutoCollect = { Title = "Auto Monedas", Desc = "Se mueve continuamente recolectando monedas de forma rápida." },
+            ChatRoles = { Title = "Revelar Roles", Desc = "Envía en el chat quién es el Asesino y el Sheriff." }
+        }
+    }
+}
 
-local currentLanguage = "PT"
-local activeTab = ""
+-- [MESCLAGEM DINÂMICA DE IDIOMAS DE SCRIPTS EXTERNOS]
+if _G.UIData and _G.UIData.Locales then
+    for langKey, langContent in pairs(_G.UIData.Locales) do
+        if not Locales[langKey] then
+            Locales[langKey] = { Tabs = {}, Options = {} }
+        end
+        Locales[langKey].SearchPlaceholder = langContent.SearchPlaceholder or Locales.EN.SearchPlaceholder
+        Locales[langKey].ConfirmCloseTitle = langContent.ConfirmCloseTitle or Locales.EN.ConfirmCloseTitle
+        Locales[langKey].ConfirmBtn = langContent.ConfirmBtn or Locales.EN.ConfirmBtn
+        Locales[langKey].CancelBtn = langContent.CancelBtn or Locales.EN.CancelBtn
+        
+        if langContent.Tabs then
+            for k, v in pairs(langContent.Tabs) do Locales[langKey].Tabs[k] = v end
+        end
+        if langContent.Options then
+            for k, v in pairs(langContent.Options) do Locales[langKey].Options[k] = v end
+        end
+    end
+end
+
+local uiDataResolved = _G.UIData or defaultStructure
+local currentLanguage = "EN"
+local activeTab = nil
 local tabButtons = {}
 local menuAberto = true
 local isMinimized = false
@@ -35,7 +122,13 @@ screenGui.Name = "DeltaAkatUniversalUI"
 screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 
-local uiParent = player:FindFirstChild("PlayerGui") or (gethui and gethui()) or game:GetService("CoreGui")
+local uiParent = player:FindFirstChild("PlayerGui")
+if gethui then uiParent = gethui()
+else
+    local ok, cg = pcall(function() return game:GetService("CoreGui") end)
+    if ok and cg then uiParent = cg end
+end
+
 if uiParent:FindFirstChild("DeltaAkatUniversalUI") then
     pcall(function() uiParent.DeltaAkatUniversalUI:Destroy() end)
 end
@@ -67,20 +160,25 @@ local function ConfigurarArrastarAkat(inst)
     end)
 end
 
+-- [BOTÃO FLUTUANTE DO MENU]
 local FloatBtn = Instance.new("ImageButton", screenGui)
 FloatBtn.Name = "FloatBtn"
 FloatBtn.AnchorPoint = Vector2.new(0.5, 0.5)
 FloatBtn.Size = UDim2.new(0, 44, 0, 44)
 FloatBtn.Position = UDim2.new(0.12, 0, 0.4, 0)
 FloatBtn.Image = "rbxthumb://type=Asset&id=99997714241420&w=150&h=150"
+FloatBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
 FloatBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 FloatBtn.Visible = false
 FloatBtn.ZIndex = 30
-Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(0, 8)
+
+local floatCorner = Instance.new("UICorner", FloatBtn)
+floatCorner.CornerRadius = UDim.new(0, 8)
 
 local FloatStroke = Instance.new("UIStroke", FloatBtn)
 FloatStroke.Thickness = 1
 FloatStroke.Color = Color3.fromRGB(139, 0, 0)
+
 local StrokeGradient = Instance.new("UIGradient", FloatStroke)
 StrokeGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromHex("#8B0000")),
@@ -97,6 +195,64 @@ task.spawn(function()
     end
 end)
 
+-- [BOTÃO FLUTUANTE DE SUPORTE MOBILE DINÂMICO]
+local AutoShootMobileBtn = Instance.new("Frame", screenGui)
+AutoShootMobileBtn.Name = "AutoShootMobileBtn"
+AutoShootMobileBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+AutoShootMobileBtn.Size = UDim2.new(0, 140, 0, 42)
+AutoShootMobileBtn.Position = UDim2.new(0.78, 0, 0.55, 0)
+AutoShootMobileBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+AutoShootMobileBtn.BackgroundTransparency = 0.25
+AutoShootMobileBtn.Visible = false
+AutoShootMobileBtn.ZIndex = 40
+
+local asBtnCorner = Instance.new("UICorner", AutoShootMobileBtn)
+asBtnCorner.CornerRadius = UDim.new(0, 8)
+
+local asBtnStroke = Instance.new("UIStroke", AutoShootMobileBtn)
+asBtnStroke.Thickness = 1.5
+asBtnStroke.Color = Color3.fromRGB(139, 0, 0)
+
+local asStrokeGradient = Instance.new("UIGradient", asBtnStroke)
+asStrokeGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromHex("#8B0000")),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(15, 15, 15)),
+    ColorSequenceKeypoint.new(1, Color3.fromHex("#8B0000"))
+})
+
+task.spawn(function()
+    local rot = 0
+    while task.wait() do
+        if not asStrokeGradient.Parent then break end
+        rot = (rot + 3) % 360
+        asStrokeGradient.Rotation = rot
+    end
+end)
+
+local asBtnText = Instance.new("TextButton", AutoShootMobileBtn)
+asBtnText.Size = UDim2.new(1, 0, 1, 0)
+asBtnText.BackgroundTransparency = 1
+asBtnText.Text = "Action Trigger"
+asBtnText.TextColor3 = Color3.fromRGB(255, 255, 255)
+asBtnText.Font = Enum.Font.GothamBold
+asBtnText.TextSize = 12
+asBtnText.ZIndex = 41
+
+ConfigurarArrastarAkat(AutoShootMobileBtn)
+
+asBtnText.MouseButton1Click:Connect(function()
+    local info = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    TweenService:Create(AutoShootMobileBtn, info, {Size = UDim2.new(0, 130, 0, 38)}):Play()
+    task.delay(0.1, function()
+        TweenService:Create(AutoShootMobileBtn, info, {Size = UDim2.new(0, 140, 0, 42)}):Play()
+    end)
+
+    if _G.AkatCallbacks and _G.AkatCallbacks.FireShoot then
+        _G.AkatCallbacks.FireShoot()
+    end
+end)
+
+-- [ESTRUTURA GERAL DO MENU]
 local mainWrapper = Instance.new("Frame")
 mainWrapper.Name = "MainWrapper"
 mainWrapper.AnchorPoint = Vector2.new(0.5, 0)
@@ -142,10 +298,10 @@ topBar.ZIndex = 6
 
 local title = Instance.new("TextLabel", topBar)
 title.Name = "Title"
-title.Size = UDim2.new(0, 200, 0, 22)
+title.Size = UDim2.new(0, 240, 0, 22)
 title.Position = UDim2.new(0, 16, 0, 10)
 title.BackgroundTransparency = 1
-title.Text = MenuTitleText
+title.Text = "AKAT SCRIPT" -- TRAVADO GLOBALMENTE CONFORME PEDIDO
 title.TextColor3 = Color3.fromHex("#8B0000")
 title.TextSize = 16
 title.Font = Enum.Font.GothamBold
@@ -154,11 +310,11 @@ title.ZIndex = 6
 
 local subtitle = Instance.new("TextLabel", topBar)
 subtitle.Name = "Subtitle"
-subtitle.Size = UDim2.new(0, 200, 0, 14)
+subtitle.Size = UDim2.new(0, 240, 0, 14)
 subtitle.Position = UDim2.new(0, 16, 0, 28)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = MenuSubtitleText
-subtitle.TextColor3 = Color3.fromHex("#8B0000")
+subtitle.Text = tostring(uiDataResolved.Subtitle or "UNIVERSAL COMPONENT") -- PERMITIDO APENAS ALTERAR O SUBTÍTULO
+subtitle.TextColor3 = Color3.fromRGB(160, 160, 160)
 subtitle.TextSize = 10
 subtitle.Font = Enum.Font.Gotham
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -182,6 +338,7 @@ searchTextBox.Name = "SearchTextBox"
 searchTextBox.Size = UDim2.new(1, -20, 1, 0)
 searchTextBox.Position = UDim2.new(0, 12, 0, 0)
 searchTextBox.BackgroundTransparency = 1
+searchTextBox.PlaceholderText = "Search..."
 searchTextBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
 searchTextBox.Text = ""
 searchTextBox.TextColor3 = Color3.fromRGB(230, 230, 230)
@@ -201,9 +358,11 @@ UIListTop.FillDirection = Enum.FillDirection.Horizontal
 UIListTop.HorizontalAlignment = Enum.HorizontalAlignment.Right
 UIListTop.VerticalAlignment = Enum.VerticalAlignment.Center
 UIListTop.Padding = UDim.new(0, 8)
+UIListTop.SortOrder = Enum.SortOrder.LayoutOrder
 
 local LanguageBtn = Instance.new("TextButton", topButtons)
 LanguageBtn.Name = "LanguageBtn"
+LanguageBtn.LayoutOrder = 0
 LanguageBtn.Size = UDim2.new(0, 26, 0, 26)
 LanguageBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
 LanguageBtn.Text = currentLanguage
@@ -215,6 +374,7 @@ Instance.new("UICorner", LanguageBtn).CornerRadius = UDim.new(0, 5)
 
 local SearchBtn = Instance.new("TextButton", topButtons)
 SearchBtn.Name = "SearchBtn"
+SearchBtn.LayoutOrder = 1
 SearchBtn.Size = UDim2.new(0, 26, 0, 26)
 SearchBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
 SearchBtn.Text = ""
@@ -230,6 +390,7 @@ SearchIcon.BackgroundTransparency = 1
 SearchIcon.ZIndex = 8
 
 local SearchCircle = Instance.new("Frame", SearchIcon)
+SearchCircle.Name = "Circle"
 SearchCircle.Size = UDim2.new(0, 8, 0, 8)
 SearchCircle.Position = UDim2.new(0, 1, 0, 1)
 SearchCircle.BackgroundTransparency = 1
@@ -240,6 +401,7 @@ circleStroke.Color = Color3.fromHex("#A0A0A0")
 circleStroke.Thickness = 1
 
 local SearchHandle = Instance.new("Frame", SearchIcon)
+SearchHandle.Name = "Handle"
 SearchHandle.Size = UDim2.new(0, 1, 0, 5)
 SearchHandle.Position = UDim2.new(0, 9, 0, 8)
 SearchHandle.Rotation = -45
@@ -249,6 +411,7 @@ SearchHandle.ZIndex = 8
 
 local MinimizeBtn = Instance.new("TextButton", topButtons)
 MinimizeBtn.Name = "MinimizeBtn"
+MinimizeBtn.LayoutOrder = 2
 MinimizeBtn.Size = UDim2.new(0, 26, 0, 26)
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
 MinimizeBtn.Text = ""
@@ -266,6 +429,7 @@ MinimizeLine.ZIndex = 8
 
 local CloseBtn = Instance.new("TextButton", topButtons)
 CloseBtn.Name = "CloseBtn"
+CloseBtn.LayoutOrder = 3
 CloseBtn.Size = UDim2.new(0, 26, 0, 26)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
 CloseBtn.Text = ""
@@ -299,6 +463,7 @@ div.BackgroundColor3 = Color3.fromHex("#121212")
 div.BorderSizePixel = 0
 div.ZIndex = 6
 
+-- [SIDEBAR]
 local SidebarFrame = Instance.new("Frame", mainFrame)
 SidebarFrame.Name = "SidebarFrame"
 SidebarFrame.Size = UDim2.new(0, 140, 1, -53)
@@ -337,6 +502,7 @@ pcall(function() TabsContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y end)
 
 local TabsLayout = Instance.new("UIListLayout", TabsContainer)
 TabsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+TabsLayout.Padding = UDim.new(0, 0)
 TabsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 local UserProfileFrame = Instance.new("Frame", SidebarFrame)
@@ -353,6 +519,7 @@ ProfileBorder.Color = Color3.fromRGB(24, 24, 24)
 ProfileBorder.Thickness = 1
 
 local AvatarImage = Instance.new("ImageLabel", UserProfileFrame)
+AvatarImage.Name = "AvatarImage"
 AvatarImage.Size = UDim2.new(0, 32, 0, 32)
 AvatarImage.Position = UDim2.new(0, 10, 0.5, -16)
 AvatarImage.BackgroundTransparency = 1
@@ -361,6 +528,7 @@ AvatarImage.ZIndex = 8
 Instance.new("UICorner", AvatarImage).CornerRadius = UDim.new(1, 0)
 
 local DisplayNameLabel = Instance.new("TextLabel", UserProfileFrame)
+DisplayNameLabel.Name = "DisplayNameLabel"
 DisplayNameLabel.Size = UDim2.new(1, -54, 0, 14)
 DisplayNameLabel.Position = UDim2.new(0, 48, 0.5, -14)
 DisplayNameLabel.BackgroundTransparency = 1
@@ -373,6 +541,7 @@ DisplayNameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 DisplayNameLabel.ZIndex = 8
 
 local UsernameLabel = Instance.new("TextLabel", UserProfileFrame)
+UsernameLabel.Name = "UsernameLabel"
 UsernameLabel.Size = UDim2.new(1, -54, 0, 12)
 UsernameLabel.Position = UDim2.new(0, 48, 0.5, 0)
 UsernameLabel.BackgroundTransparency = 1
@@ -442,6 +611,7 @@ btnNo.TextSize = 12
 btnNo.ZIndex = 51
 Instance.new("UICorner", btnNo).CornerRadius = UDim.new(0, 6)
 
+-- [FUNÇÕES DA UI]
 local function RegistrarTransparencias(objeto)
     if originalTrans[objeto] then return end
     if objeto:IsA("Frame") or objeto:IsA("ScrollingFrame") then
@@ -495,23 +665,27 @@ end
 
 local function AplicarFadeIdiomaModerno(fadeOut, duracao)
     local info = TweenInfo.new(duracao, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    
     if fadeOut then
         TweenService:Create(LanguageBtn, TweenInfo.new(duracao, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0, 18, 0, 18)}):Play()
     else
         TweenService:Create(LanguageBtn, TweenInfo.new(duracao, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 26, 0, 26)}):Play()
     end
+
     for _, btn in pairs(tabButtons) do
         local label = btn:FindFirstChild("Label")
         if label then
             RegistrarTransparencias(label)
-            local t = fadeOut and 1 or (originalTrans[label] and originalTrans[label].TextTransparency or 0)
+            local orig = originalTrans[label]
+            local t = fadeOut and 1 or (orig and orig.TextTransparency or 0)
             TweenService:Create(label, info, {TextTransparency = t}):Play()
         end
     end
     for _, child in ipairs(togglesContainer:GetDescendants()) do
         if child:IsA("TextLabel") then
             RegistrarTransparencias(child)
-            local t = fadeOut and 1 or (originalTrans[child] and originalTrans[child].TextTransparency or 0)
+            local orig = originalTrans[child]
+            local t = fadeOut and 1 or (orig and orig.TextTransparency or 0)
             TweenService:Create(child, info, {TextTransparency = t}):Play()
         end
     end
@@ -532,55 +706,58 @@ local function CriarIconeProcedural(parent, tabName)
     imageLabel.BackgroundTransparency = 1
     imageLabel.ZIndex = 10
     imageLabel.ImageColor3 = Color3.fromRGB(180, 180, 180)
-    imageLabel.Image = "rbxthumb://type=Asset&id=96954032676031&w=150&h=150" -- Ícone universal padrão
+    
+    -- Mapeamento dinâmico e flexível de ícones (Aceita novos nomes de abas com um ícone padrão de fallback)
+    if tabName == "Movement" then
+        imageLabel.Image = "rbxthumb://type=Asset&id=116118153718196&w=150&h=150"
+    elseif tabName == "Teleports" then
+        imageLabel.Image = "rbxthumb://type=Asset&id=131357413318360&w=150&h=150"
+    elseif tabName == "Misc" then
+        imageLabel.Image = "rbxthumb://type=Asset&id=96954032676031&w=150&h=150"
+    elseif tabName == "Visuals" then
+        imageLabel.Image = "rbxthumb://type=Asset&id=134099134229815&w=150&h=150"
+    elseif tabName == "Combat" then
+        imageLabel.Image = "rbxthumb://type=Asset&id=131607049070859&w=150&h=150"
+    else
+        imageLabel.Image = "rbxthumb://type=Asset&id=96954032676031&w=150&h=150" -- Fallback global
+    end
 end
 
 local function RecolorirIcone(iconContainer, targetColor, animSpeed)
     if not iconContainer then return end
     for _, child in ipairs(iconContainer:GetDescendants()) do
-        if child.Name == "AccentImage" and child:IsA("ImageLabel") then
+        if child.Name == "AccentStroke" and child:IsA("UIStroke") then
+            TweenService:Create(child, animSpeed, {Color = targetColor}):Play()
+        elseif child.Name == "AccentFill" and child:IsA("Frame") then
+            TweenService:Create(child, animSpeed, {BackgroundColor3 = targetColor}):Play()
+        elseif child.Name == "AccentImage" and child:IsA("ImageLabel") then
             TweenService:Create(child, animSpeed, {ImageColor3 = targetColor}):Play()
         end
     end
 end
 
--- ==================== TRADUTOR TOTALMENTE GLOBAL E DINÂMICO ====================
 local function AtualizarIdioma()
     local langData = Locales[currentLanguage]
     if not langData then return end
-    
-    searchTextBox.PlaceholderText = langData.SearchPlaceholder or "Search..."
-    
-    -- Traduz as abas dinamicamente com base nas chaves passadas
+    searchTextBox.PlaceholderText = langData.SearchPlaceholder
     for tabName, btn in pairs(tabButtons) do
         local label = btn:FindFirstChild("Label")
-        if label then 
-            label.Text = (langData.Tabs and langData.Tabs[tabName]) or tabName 
-        end
+        if label then label.Text = langData.Tabs[tabName] or tabName end
     end
-    
-    -- Traduz cada interruptor lendo as configurações globais fornecidas
     for _, child in ipairs(togglesContainer:GetChildren()) do
         if child:IsA("Frame") and child.Name ~= "UIListLayout" and child.Name ~= "UIPadding" then
             local configKey = child:GetAttribute("ConfigKey")
-            if configKey then
+            if configKey and langData.Options[configKey] then
                 local titleLabel = child:FindFirstChild("Title")
                 local descLabel  = child:FindFirstChild("Description")
-                
-                if langData.Options and langData.Options[configKey] then
-                    if titleLabel then titleLabel.Text = langData.Options[configKey].Title or configKey end
-                    if descLabel  then descLabel.Text  = langData.Options[configKey].Desc or "" end
-                else
-                    -- Se o script não fornecer tradução, renderiza a própria chave para não bugar vazio
-                    if titleLabel then titleLabel.Text = configKey end
-                end
+                if titleLabel then titleLabel.Text = langData.Options[configKey].Title end
+                if descLabel  then descLabel.Text  = langData.Options[configKey].Desc  end
             end
         end
     end
-    
-    confirmLabel.Text = langData.ConfirmCloseTitle or "Close?"
-    btnYes.Text = langData.ConfirmBtn or "Yes"
-    btnNo.Text  = langData.CancelBtn or "No"
+    confirmLabel.Text = langData.ConfirmCloseTitle
+    btnYes.Text = langData.ConfirmBtn
+    btnNo.Text  = langData.CancelBtn
 end
 
 local function filterToggles(currentActiveTab, query)
@@ -588,7 +765,7 @@ local function filterToggles(currentActiveTab, query)
     local itemIndex = 0
     for _, child in ipairs(togglesContainer:GetChildren()) do
         if child:IsA("Frame") and child.Name ~= "UIListLayout" and child.Name ~= "UIPadding" then
-            local itemTab = child:GetAttribute("Tab") or ""
+            local itemTab = child:GetAttribute("Tab") or "Combat"
             local shouldBeVisible = false
             if searchQuery ~= "" then
                 local titleLabel = child:FindFirstChild("Title")
@@ -673,8 +850,12 @@ local function createTabBtn(tabName)
     tabLabel.TextXAlignment = Enum.TextXAlignment.Left
     tabLabel.ZIndex = 9
 
-    tabBtn.MouseButton1Down:Connect(function() TweenService:Create(tabLabel, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {TextSize = 10}):Play() end)
-    tabBtn.MouseButton1Up:Connect(function() TweenService:Create(tabLabel, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {TextSize = 11}):Play() end)
+    tabBtn.MouseButton1Down:Connect(function()
+        TweenService:Create(tabLabel, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {TextSize = 10}):Play()
+    end)
+    tabBtn.MouseButton1Up:Connect(function()
+        TweenService:Create(tabLabel, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {TextSize = 11}):Play()
+    end)
     tabBtn.MouseLeave:Connect(function()
         TweenService:Create(tabLabel, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {TextSize = 11}):Play()
         if activeTab ~= tabName then
@@ -761,6 +942,10 @@ local function createToggle(parent, configKey, tabCategory)
         
         if _G.AkatCallbacks and _G.AkatCallbacks[configKey] then
             task.spawn(_G.AkatCallbacks[configKey], Configs[configKey])
+        end
+
+        if configKey == "AutoShoot" then
+            AutoShootMobileBtn.Visible = Configs.AutoShoot
         end
     end)
 end
@@ -890,7 +1075,7 @@ local function ExecutarIntroAkat()
     IntroText.Font = Enum.Font.GothamBold
     IntroText.TextSize = 26
     IntroText.RichText = true
-    IntroText.Text = Locales[currentLanguage].Intro or MenuTitleText
+    IntroText.Text = '<font color="#FFFFFF">Scripts por | </font><font color="#8B0000">Comunidade AKAT</font>' -- ESTRUTURA REQUERIDA FIXA GLOBALMENTE
     IntroText.TextTransparency = 1
     IntroText.ZIndex = 501
 
@@ -923,7 +1108,7 @@ local function ExecutarIntroAkat()
         end
     end)
 
-    task.wait(1.2)
+    task.wait(1.5)
     correndoBrilho = false
 
     TweenService:Create(IntroText, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1, Position = UDim2.new(0.5, 0, 0.5, -16)}):Play()
@@ -948,31 +1133,43 @@ local function ExecutarIntroAkat()
     AplicarFadeSincronizado(mainWrapper, false, 0.12)
     local openTween = TweenService:Create(mainWrapper, fastOpen, {Size = UDim2.new(0, 520, 0, 300)})
     openTween:Play()
-    openTween.Completed:Connect(function() selectTab(activeTab) end)
+    
+    -- Inicialização Dinâmica da Primeira Aba Registrada
+    local activeInitialTab = "Combat"
+    if uiDataResolved.MenuStructure and uiDataResolved.MenuStructure[1] then
+        activeInitialTab = uiDataResolved.MenuStructure[1].TabKey
+    end
+    openTween.Completed:Connect(function() selectTab(activeInitialTab) end)
 end
 
 local function AplicarEfeitoFisicoBotao(btn, hoverColor)
     btn.MouseEnter:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromRGB(36, 36, 36)}):Play()
-        if btn.Name == "MinimizeBtn" then TweenService:Create(btn.Line, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {BackgroundColor3 = hoverColor}):Play()
+        if btn.Name == "MinimizeBtn" then
+            TweenService:Create(btn.Line, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {BackgroundColor3 = hoverColor}):Play()
         elseif btn.Name == "SearchBtn" then
             TweenService:Create(circleStroke, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {Color = hoverColor}):Play()
             TweenService:Create(SearchHandle, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {BackgroundColor3 = hoverColor}):Play()
         elseif btn.Name == "CloseBtn" then
             TweenService:Create(btn.Line1, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {BackgroundColor3 = hoverColor}):Play()
             TweenService:Create(btn.Line2, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {BackgroundColor3 = hoverColor}):Play()
-        elseif btn.Name == "LanguageBtn" then TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {TextColor3 = hoverColor}):Play() end
+        elseif btn.Name == "LanguageBtn" then
+            TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {TextColor3 = hoverColor}):Play()
+        end
     end)
     btn.MouseLeave:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromRGB(24, 24, 24)}):Play()
-        if btn.Name == "MinimizeBtn" then TweenService:Create(btn.Line, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromHex("#A0A0A0")}):Play()
+        if btn.Name == "MinimizeBtn" then
+            TweenService:Create(btn.Line, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromHex("#A0A0A0")}):Play()
         elseif btn.Name == "SearchBtn" then
             TweenService:Create(circleStroke, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {Color = Color3.fromHex("#A0A0A0")}):Play()
             TweenService:Create(SearchHandle, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromHex("#A0A0A0")}):Play()
         elseif btn.Name == "CloseBtn" then
             TweenService:Create(btn.Line1, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromHex("#A0A0A0")}):Play()
             TweenService:Create(btn.Line2, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {BackgroundColor3 = Color3.fromHex("#A0A0A0")}):Play()
-        elseif btn.Name == "LanguageBtn" then TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {TextColor3 = Color3.fromRGB(160, 160, 160)}):Play() end
+        elseif btn.Name == "LanguageBtn" then
+            TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Quint), {TextColor3 = Color3.fromRGB(160, 160, 160)}):Play()
+        end
     end)
 end
 
@@ -981,27 +1178,13 @@ AplicarEfeitoFisicoBotao(SearchBtn, Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(MinimizeBtn, Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(CloseBtn, Color3.fromRGB(255, 60, 60))
 
--- ==================== MONTAGEM ESTRUTURAL 100% DINÂMICA ====================
-local tabsCriadas = {}
-
-if _G.UIData and _G.UIData.Toggles then
-    for _, item in ipairs(_G.UIData.Toggles) do
-        -- Identifica as abas dinamicamente pelo nome colocado no script de execução
-        if not tabsCriadas[item.Tab] then
-            createTabBtn(item.Tab)
-            tabsCriadas[item.Tab] = true
-            if activeTab == "" then activeTab = item.Tab end
-        end
-        createToggle(togglesContainer, item.Key, item.Tab)
+-- [MONTAGEM AUTOMÁTICA DA ESTRUTURA COM BASE NO MENU CARREGADO]
+for _, tabData in ipairs(uiDataResolved.MenuStructure) do
+    createTabBtn(tabData.TabKey)
+    for _, configKey in ipairs(tabData.Toggles) do
+        createToggle(togglesContainer, configKey, tabData.TabKey)
     end
-else
-    -- Fallback de segurança vazio para não carregar scripts alheios (como MM2) por engano
-    createTabBtn("Main")
-    activeTab = "Main"
 end
-
--- Inicialização Limpa
-AtualizarIdioma()
 
 local searchOpen = false
 SearchBtn.MouseButton1Click:Connect(function()
@@ -1018,17 +1201,30 @@ SearchBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-searchTextBox:GetPropertyChangedSignal("Text"):Connect(function() filterToggles(activeTab, searchTextBox.Text) end)
+searchTextBox:GetPropertyChangedSignal("Text"):Connect(function()
+    filterToggles(activeTab, searchTextBox.Text)
+end)
 
 local languageTransitioning = false
 LanguageBtn.MouseButton1Click:Connect(function()
     if languageTransitioning then return end
     languageTransitioning = true
+    
     AplicarFadeIdiomaModerno(true, 0.14)
     task.wait(0.14)
     
-    if currentLanguage == "EN" then currentLanguage = "PT"
-    else currentLanguage = "EN" end
+    -- Varre as chaves existentes de idiomas dinamicamente para alternar sem tabelas fixas
+    local availableLanguages = {}
+    for langCode, _ in pairs(Locales) do
+        table.insert(availableLanguages, langCode)
+    end
+    table.sort(availableLanguages)
+    
+    local index = table.find(availableLanguages, currentLanguage) or 1
+    index = index + 1
+    if index > #availableLanguages then index = 1 end
+    
+    currentLanguage = availableLanguages[index] or "EN"
     LanguageBtn.Text = currentLanguage
     
     AtualizarIdioma()
@@ -1048,17 +1244,24 @@ CloseBtn.MouseButton1Click:Connect(function()
         AplicarFadeSincronizado(togglesContainer, false, 0.15)
         TweenService:Create(mainWrapper, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 520, 0, 300)}):Play()
         AlternarConfirmacao(true)
-    else AlternarConfirmacao(true) end
+    else
+        AlternarConfirmacao(true)
+    end
 end)
 
 btnNo.MouseButton1Click:Connect(function() AlternarConfirmacao(false) end)
+
 btnYes.MouseButton1Click:Connect(function()
     local syncTime = 0.18
     if confirmBlur then TweenService:Create(confirmBlur, TweenInfo.new(syncTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 0}):Play() end
     AplicarFadeSincronizado(mainWrapper, true, syncTime)
     TweenService:Create(FloatBtn, TweenInfo.new(syncTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {ImageTransparency = 1}):Play()
     task.wait(syncTime)
-    if _G.AkatCallbacks and _G.AkatCallbacks.ShutdownAll then _G.AkatCallbacks.ShutdownAll() end
+    
+    if _G.AkatCallbacks and _G.AkatCallbacks.ShutdownAll then
+        _G.AkatCallbacks.ShutdownAll()
+    end
+    
     pcall(function() if confirmBlur then confirmBlur:Destroy() end end)
     screenGui:Destroy()
 end)
@@ -1073,6 +1276,7 @@ local function AnimarCliqueFloatBtn()
 end
 
 MinimizeBtn.MouseButton1Click:Connect(executarMinimizacao)
+
 FloatBtn.MouseButton1Click:Connect(function()
     AnimarCliqueFloatBtn()
     alternarVisibilidadeMenu()
