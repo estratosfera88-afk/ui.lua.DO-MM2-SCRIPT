@@ -1,5 +1,5 @@
 -- [[
---     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.2]
+--     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.2] - FIXED
 --     Hospede este script no GitHub/Pastebin e pegue o link "Raw"
 -- ]]
 
@@ -80,7 +80,7 @@ local Locales = {
             Misc = "Varios"
         },
         Options = {
-            AutoShoot = { Title = "Disparar al Asesino", Desc = "Activa un botón flotante para disparar directo al asesino." },
+            AutoShoot = { Title = "Disparar al Asesino", Desc = "Activa un botão flotante para disparar directo al asesino." },
             Reach = { Title = "Alcance del Cuchillo", Desc = "Aumenta considerablemente el alcance de ataque con tu cuchillo." },
             ESP = { Title = "ESP Jogadores", Desc = "Resalta jogadores por rol (Sheriff Azul / Héroe Amarillo)." },
             Speed = { Title = "Velocidad", Desc = "Aumenta la velocidad del personagem a 23 de forma fluida." },
@@ -121,10 +121,12 @@ if uiParent:FindFirstChild("DeltaAkatUniversalUI") then
 end
 screenGui.Parent = uiParent
 
-local function ConfigurarArrastarAkat(inst)
+-- Função de Arrastar Atualizada com suporte a gatilhos Mobile
+local function ConfigurarArrastarAkat(inst, trigger)
+    trigger = trigger or inst
     local drag = false
     local startPos, dragStart, dragInput
-    inst.InputBegan:Connect(function(input)
+    trigger.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             drag = true
             dragStart = input.Position
@@ -225,7 +227,8 @@ asBtnText.Font = Enum.Font.GothamBold
 asBtnText.TextSize = 12
 asBtnText.ZIndex = 41
 
-ConfigurarArrastarAkat(AutoShootMobileBtn)
+-- Corrigido: Agora usa o próprio TextButton interno como gatilho para arrastar no Mobile
+ConfigurarArrastarAkat(AutoShootMobileBtn, asBtnText)
 
 asBtnText.MouseButton1Click:Connect(function()
     local info = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -467,6 +470,25 @@ SidebarSeparator.Position = UDim2.new(1, 0, 0, 0)
 SidebarSeparator.BackgroundColor3 = Color3.fromHex("#121212")
 SidebarSeparator.BorderSizePixel = 0
 SidebarSeparator.ZIndex = 6
+
+-- CORREÇÃO DA CURVA DO SEPARADOR: Quadros retos para cobrir o arredondamento indesejado do lado direito do container
+local TopRightFix = Instance.new("Frame", SidebarFrame)
+TopRightFix.Name = "TopRightFix"
+TopRightFix.Size = UDim2.new(0, 9, 0, 9)
+TopRightFix.Position = UDim2.new(1, -9, 0, 0)
+TopRightFix.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+TopRightFix.BackgroundTransparency = 0.35
+TopRightFix.BorderSizePixel = 0
+TopRightFix.ZIndex = 6
+
+local BottomRightFix = Instance.new("Frame", SidebarFrame)
+BottomRightFix.Name = "BottomRightFix"
+BottomRightFix.Size = UDim2.new(0, 9, 0, 9)
+BottomRightFix.Position = UDim2.new(1, -9, 1, -9)
+BottomRightFix.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+BottomRightFix.BackgroundTransparency = 0.35
+BottomRightFix.BorderSizePixel = 0
+BottomRightFix.ZIndex = 6
 
 local ProfileDiv = Instance.new("Frame", SidebarFrame)
 ProfileDiv.Size = UDim2.new(1, 0, 0, 1)
@@ -1055,7 +1077,7 @@ local function ExecutarIntroAkat()
     local IntroText = Instance.new("TextLabel", IntroFrame)
     IntroText.AnchorPoint = Vector2.new(0.5, 0.5)
     IntroText.Size = UDim2.new(0, 600, 0, 80)
-    IntroText.Position = UDim2.new(0.5, 0, 0.5, 10)
+    IntroText.Position = UDim2.new(0.5, 0, 0.5, -10)
     IntroText.BackgroundTransparency = 1
     IntroText.Font = Enum.Font.GothamBold
     IntroText.TextSize = 26
@@ -1172,6 +1194,9 @@ createToggle(togglesContainer, "TpToGun",     "Teleports")
 createToggle(togglesContainer, "SafeSpot",    "Teleports")
 createToggle(togglesContainer, "AutoCollect", "Misc")
 createToggle(togglesContainer, "ChatRoles",   "Misc")
+
+-- Corrigido: Atualiza o idioma na inicialização para evitar que textos fiquem como "Label"
+AtualizarIdioma()
 
 local searchOpen = false
 SearchBtn.MouseButton1Click:Connect(function()
