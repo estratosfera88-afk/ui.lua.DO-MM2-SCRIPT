@@ -1,5 +1,5 @@
 -- [[
---     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.2] - FIXED
+--     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.3] - OPTIMIZED
 --     Hospede este script no GitHub/Pastebin e pegue o link "Raw"
 -- ]]
 
@@ -121,7 +121,7 @@ if uiParent:FindFirstChild("DeltaAkatUniversalUI") then
 end
 screenGui.Parent = uiParent
 
--- Função de Arrastar Atualizada com suporte a gatilhos Mobile
+-- Função de Arrastar com suporte a gatilhos Mobile
 local function ConfigurarArrastarAkat(inst, trigger)
     trigger = trigger or inst
     local drag = false
@@ -175,14 +175,9 @@ StrokeGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1, Color3.fromHex("#8B0000"))
 })
 
-task.spawn(function()
-    local rot = 0
-    while task.wait() do
-        if not StrokeGradient.Parent then break end
-        rot = (rot + 3) % 360
-        StrokeGradient.Rotation = rot
-    end
-end)
+-- OTIMIZAÇÃO: Rotação infinita via engine C++ (0% de uso de CPU no Luau)
+local rotTweenInfo = TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
+TweenService:Create(StrokeGradient, rotTweenInfo, {Rotation = 360}):Play()
 
 -- [BOTÃO FLUTUANTE DO AUTO SHOOT MOBILE]
 local AutoShootMobileBtn = Instance.new("Frame", screenGui)
@@ -209,14 +204,8 @@ asStrokeGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1, Color3.fromHex("#8B0000"))
 })
 
-task.spawn(function()
-    local rot = 0
-    while task.wait() do
-        if not asStrokeGradient.Parent then break end
-        rot = (rot + 3) % 360
-        asStrokeGradient.Rotation = rot
-    end
-end)
+-- OTIMIZAÇÃO: Rotação nativa para o botão flutuante secundário
+TweenService:Create(asStrokeGradient, rotTweenInfo, {Rotation = 360}):Play()
 
 local asBtnText = Instance.new("TextButton", AutoShootMobileBtn)
 asBtnText.Size = UDim2.new(1, 0, 1, 0)
@@ -227,7 +216,6 @@ asBtnText.Font = Enum.Font.GothamBold
 asBtnText.TextSize = 12
 asBtnText.ZIndex = 41
 
--- Corrigido: Agora usa o próprio TextButton interno como gatilho para arrastar no Mobile
 ConfigurarArrastarAkat(AutoShootMobileBtn, asBtnText)
 
 asBtnText.MouseButton1Click:Connect(function()
@@ -462,7 +450,8 @@ SidebarFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
 SidebarFrame.BackgroundTransparency = 0.35
 SidebarFrame.BorderSizePixel = 0
 SidebarFrame.ZIndex = 6
-Instance.new("UICorner", SidebarFrame).CornerRadius = UDim.new(0, 9)
+-- CORREÇÃO DEFINITIVA: Removido o UICorner deste container. 
+-- Sendo reto no topo, elimina de vez os buracos visuais e manchas de transparência dupla.
 
 local SidebarSeparator = Instance.new("Frame", SidebarFrame)
 SidebarSeparator.Size = UDim2.new(0, 1, 1, 0)
@@ -470,25 +459,6 @@ SidebarSeparator.Position = UDim2.new(1, 0, 0, 0)
 SidebarSeparator.BackgroundColor3 = Color3.fromHex("#121212")
 SidebarSeparator.BorderSizePixel = 0
 SidebarSeparator.ZIndex = 6
-
--- CORREÇÃO DA CURVA DO SEPARADOR: Quadros retos para cobrir o arredondamento indesejado do lado direito do container
-local TopRightFix = Instance.new("Frame", SidebarFrame)
-TopRightFix.Name = "TopRightFix"
-TopRightFix.Size = UDim2.new(0, 9, 0, 9)
-TopRightFix.Position = UDim2.new(1, -9, 0, 0)
-TopRightFix.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-TopRightFix.BackgroundTransparency = 0.35
-TopRightFix.BorderSizePixel = 0
-TopRightFix.ZIndex = 6
-
-local BottomRightFix = Instance.new("Frame", SidebarFrame)
-BottomRightFix.Name = "BottomRightFix"
-BottomRightFix.Size = UDim2.new(0, 9, 0, 9)
-BottomRightFix.Position = UDim2.new(1, -9, 1, -9)
-BottomRightFix.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-BottomRightFix.BackgroundTransparency = 0.35
-BottomRightFix.BorderSizePixel = 0
-BottomRightFix.ZIndex = 6
 
 local ProfileDiv = Instance.new("Frame", SidebarFrame)
 ProfileDiv.Size = UDim2.new(1, 0, 0, 1)
@@ -1195,7 +1165,7 @@ createToggle(togglesContainer, "SafeSpot",    "Teleports")
 createToggle(togglesContainer, "AutoCollect", "Misc")
 createToggle(togglesContainer, "ChatRoles",   "Misc")
 
--- Corrigido: Atualiza o idioma na inicialização para evitar que textos fiquem como "Label"
+-- Define os textos logo no carregamento inicial
 AtualizarIdioma()
 
 local searchOpen = false
