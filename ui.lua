@@ -1,6 +1,6 @@
 -- [[
---     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.7] - MOBILE & PC OPTIMIZED
---     FIXED: Anti-Conflict Mobile Scroll, Touch-Friendly Drag System, No Elastic Scroll
+--     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.5] - OPTIMIZED
+--     FIXED: AutoShoot restored inside UI (Float button removed), Tabs Scroll, SearchBar Frame Layout
 -- ]]
 
 local Players = game:GetService("Players")
@@ -122,42 +122,30 @@ if uiParent:FindFirstChild("DeltaAkatUniversalUI") then
 end
 screenGui.Parent = uiParent
 
--- [FUNÇÃO DE ARRASTAR INTELIGENTE - ANTICONFLITO MOBILE/PC]
-local function ConfigurarArrastarAkat(inst, dragHandle)
-    local dragging = false
-    local dragInput, dragStart, startPos
-
-    dragHandle.InputBegan:Connect(function(input)
+-- Função de Arrastar com suporte a gatilhos Mobile
+local function ConfigurarArrastarAkat(inst, trigger)
+    trigger = trigger or inst
+    local drag = false
+    local startPos, dragStart, dragInput
+    trigger.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
+            drag = true
             dragStart = input.Position
             startPos = inst.Position
-
+            dragInput = input
             local connection
             connection = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
+                    drag = false
                     connection:Disconnect()
                 end
             end)
         end
     end)
-
-    dragHandle.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
     UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
+        if drag and input == dragInput and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
-            inst.Position = UDim2.new(
-                startPos.X.Scale, 
-                startPos.X.Offset + delta.X, 
-                startPos.Y.Scale, 
-                startPos.Y.Offset + delta.Y
-            )
+            inst.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
 end
@@ -232,8 +220,7 @@ mainFrame.Parent = mainWrapper
 local topBar = Instance.new("Frame", mainFrame)
 topBar.Name = "TopBar"
 topBar.Size = UDim2.new(1, 0, 0, 52)
-topBar.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-topBar.BackgroundTransparency = 0.99 -- Garante detecção do toque sem afetar o visual
+topBar.BackgroundTransparency = 1
 topBar.ZIndex = 6
 
 local title = Instance.new("TextLabel", topBar)
@@ -292,7 +279,7 @@ topButtons.Name = "TopButtons"
 topButtons.Size = UDim2.new(0, 128, 0, 26)
 topButtons.Position = UDim2.new(1, -144, 0.5, -13)
 topButtons.BackgroundTransparency = 1
-topButtons.ZIndex = 7
+topButtons.ZIndex = 6
 
 local UIListTop = Instance.new("UIListLayout", topButtons)
 UIListTop.FillDirection = Enum.FillDirection.Horizontal
@@ -310,7 +297,7 @@ LanguageBtn.Text = currentLanguage
 LanguageBtn.TextColor3 = Color3.fromRGB(160, 160, 160)
 LanguageBtn.Font = Enum.Font.GothamBold
 LanguageBtn.TextSize = 10
-LanguageBtn.ZIndex = 8
+LanguageBtn.ZIndex = 7
 Instance.new("UICorner", LanguageBtn).CornerRadius = UDim.new(0, 5)
 
 local SearchBtn = Instance.new("TextButton", topButtons)
@@ -319,7 +306,7 @@ SearchBtn.LayoutOrder = 1
 SearchBtn.Size = UDim2.new(0, 26, 0, 26)
 SearchBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
 SearchBtn.Text = ""
-SearchBtn.ZIndex = 8
+SearchBtn.ZIndex = 7
 Instance.new("UICorner", SearchBtn).CornerRadius = UDim.new(0, 5)
 
 local SearchIcon = Instance.new("Frame", SearchBtn)
@@ -328,14 +315,14 @@ SearchIcon.Size = UDim2.new(0, 14, 0, 14)
 SearchIcon.AnchorPoint = Vector2.new(0.5, 0.5)
 SearchIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
 SearchIcon.BackgroundTransparency = 1
-SearchIcon.ZIndex = 9
+SearchIcon.ZIndex = 8
 
 local SearchCircle = Instance.new("Frame", SearchIcon)
 SearchCircle.Name = "Circle"
 SearchCircle.Size = UDim2.new(0, 8, 0, 8)
 SearchCircle.Position = UDim2.new(0, 1, 0, 1)
 SearchCircle.BackgroundTransparency = 1
-SearchCircle.ZIndex = 9
+SearchCircle.ZIndex = 8
 Instance.new("UICorner", SearchCircle).CornerRadius = UDim.new(1, 0)
 local circleStroke = Instance.new("UIStroke", SearchCircle)
 circleStroke.Color = Color3.fromHex("#A0A0A0")
@@ -348,7 +335,7 @@ SearchHandle.Position = UDim2.new(0, 9, 0, 8)
 SearchHandle.Rotation = -45
 SearchHandle.BackgroundColor3 = Color3.fromHex("#A0A0A0")
 SearchHandle.BorderSizePixel = 0
-SearchHandle.ZIndex = 9
+SearchHandle.ZIndex = 8
 
 local MinimizeBtn = Instance.new("TextButton", topButtons)
 MinimizeBtn.Name = "MinimizeBtn"
@@ -356,7 +343,7 @@ MinimizeBtn.LayoutOrder = 2
 MinimizeBtn.Size = UDim2.new(0, 26, 0, 26)
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
 MinimizeBtn.Text = ""
-MinimizeBtn.ZIndex = 8
+MinimizeBtn.ZIndex = 7
 Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 5)
 
 local MinimizeLine = Instance.new("Frame", MinimizeBtn)
@@ -366,7 +353,7 @@ MinimizeLine.Position = UDim2.new(0.5, 0, 0.5, 0)
 MinimizeLine.Size = UDim2.new(0, 10, 0, 1)
 MinimizeLine.BackgroundColor3 = Color3.fromHex("#A0A0A0")
 MinimizeLine.BorderSizePixel = 0
-MinimizeLine.ZIndex = 9
+MinimizeLine.ZIndex = 8
 
 local CloseBtn = Instance.new("TextButton", topButtons)
 CloseBtn.Name = "CloseBtn"
@@ -374,7 +361,7 @@ CloseBtn.LayoutOrder = 3
 CloseBtn.Size = UDim2.new(0, 26, 0, 26)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
 CloseBtn.Text = ""
-CloseBtn.ZIndex = 8
+CloseBtn.ZIndex = 7
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 5)
 
 local CloseLine1 = Instance.new("Frame", CloseBtn)
@@ -385,7 +372,7 @@ CloseLine1.Size = UDim2.new(0, 10, 0, 1)
 CloseLine1.Rotation = 45
 CloseLine1.BackgroundColor3 = Color3.fromHex("#A0A0A0")
 CloseLine1.BorderSizePixel = 0
-CloseLine1.ZIndex = 9
+CloseLine1.ZIndex = 8
 
 local CloseLine2 = Instance.new("Frame", CloseBtn)
 CloseLine2.Name = "Line2"
@@ -395,7 +382,7 @@ CloseLine2.Size = UDim2.new(0, 10, 0, 1)
 CloseLine2.Rotation = -45
 CloseLine2.BackgroundColor3 = Color3.fromHex("#A0A0A0")
 CloseLine2.BorderSizePixel = 0
-CloseLine2.ZIndex = 9
+CloseLine2.ZIndex = 8
 
 local div = Instance.new("Frame", mainFrame)
 div.Name = "Div"
@@ -429,7 +416,7 @@ ProfileDiv.BackgroundColor3 = Color3.fromHex("#121212")
 ProfileDiv.BorderSizePixel = 0
 ProfileDiv.ZIndex = 6
 
--- [TABS CONTAINER - FIXED ACTIVE ROLAGEM MOBILE]
+-- [TABS CONTAINER - CUSTOMIZADO]
 local TabsContainer = Instance.new("ScrollingFrame", SidebarFrame)
 TabsContainer.Name = "TabsContainer"
 TabsContainer.Size = UDim2.new(1, 0, 1, -75)
@@ -438,11 +425,10 @@ TabsContainer.BackgroundTransparency = 1
 TabsContainer.BorderSizePixel = 0
 TabsContainer.ZIndex = 7
 TabsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-TabsContainer.ElasticBehavior = Enum.ElasticBehavior.Never
-TabsContainer.ScrollBarThickness = 2
+TabsContainer.ElasticBehavior = Enum.ElasticBehavior.Never -- Modificado: Removeu o efeito chiclete
+TabsContainer.ScrollBarThickness = 2 -- Modificado: Barra vermelha mais fina
 TabsContainer.ScrollBarImageColor3 = Color3.fromRGB(139, 0, 0)
 TabsContainer.ScrollBarImageTransparency = 0.4
-TabsContainer.Active = true -- Força o Mobile a focar na rolagem interna
 pcall(function() TabsContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y end)
 
 local TabsLayout = Instance.new("UIListLayout", TabsContainer)
@@ -498,19 +484,17 @@ UsernameLabel.TextXAlignment = Enum.TextXAlignment.Left
 UsernameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 UsernameLabel.ZIndex = 8
 
--- [TOGGLES CONTAINER - FIXED ACTIVE ROLAGEM MOBILE]
 local togglesContainer = Instance.new("ScrollingFrame", mainFrame)
 togglesContainer.Name = "TogglesContainer"
 togglesContainer.Size = UDim2.new(1, -156, 1, -66)
 togglesContainer.Position = UDim2.new(0, 148, 0, 58)
 togglesContainer.BackgroundTransparency = 1
 togglesContainer.BorderSizePixel = 0
-togglesContainer.ScrollBarThickness = 2
+togglesContainer.ScrollBarThickness = 2 -- Modificado: Barra vermelha mais fina
 togglesContainer.ScrollBarImageColor3 = Color3.fromRGB(139, 0, 0)
 togglesContainer.ZIndex = 6
 togglesContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-togglesContainer.ElasticBehavior = Enum.ElasticBehavior.Never
-togglesContainer.Active = true -- Impede que o gesto de rolagem mobile arraste o menu inteiro
+togglesContainer.ElasticBehavior = Enum.ElasticBehavior.Never -- Modificado: Removeu o efeito chiclete
 pcall(function() togglesContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y end)
 
 local containerLayout = Instance.new("UIListLayout", togglesContainer)
@@ -884,6 +868,7 @@ local function createToggle(parent, configKey, tabCategory)
         TweenService:Create(switchCircle, anim, {Position = targetPos}):Play()
         TweenService:Create(switchTrack, anim, {BackgroundColor3 = targetColor}):Play()
         
+        -- EXECUTA APENAS A LÓGICA PELO BRIDGE GLOBAL (SEM CRIAR BOTÃO FLUTUANTE ADICIONAL)
         if _G.AkatCallbacks and _G.AkatCallbacks[configKey] then
             task.spawn(_G.AkatCallbacks[configKey], Configs[configKey])
         end
@@ -943,6 +928,7 @@ local function executarMinimizacao()
     local windowAnim = TweenInfo.new(0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     
     if isMinimized then
+        -- MELHORIA DA POSIÇÃO DA LINHA DE PESQUISA: Reseta e oculta perfeitamente para não quebrar o layout
         searchOpen = false
         searchTextBox.Text = ""
         searchBarFrame.Visible = false
@@ -1155,6 +1141,7 @@ createTabBtn("Movement")
 createTabBtn("Teleports")
 createTabBtn("Misc")
 
+-- ADICIONADO DE VOLTA: AutoShoot ativo apenas dentro do menu, sem botão flutuante
 createToggle(togglesContainer, "AutoShoot",   "Combat")
 createToggle(togglesContainer, "Reach",       "Combat")
 createToggle(togglesContainer, "ESP",         "Visuals")
@@ -1165,6 +1152,7 @@ createToggle(togglesContainer, "SafeSpot",    "Teleports")
 createToggle(togglesContainer, "AutoCollect", "Misc")
 createToggle(togglesContainer, "ChatRoles",   "Misc")
 
+-- Define os textos logo no carregamento inicial
 AtualizarIdioma()
 
 SearchBtn.MouseButton1Click:Connect(function()
@@ -1231,6 +1219,7 @@ btnYes.MouseButton1Click:Connect(function()
     TweenService:Create(FloatBtn, TweenInfo.new(syncTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {ImageTransparency = 1}):Play()
     task.wait(syncTime)
     
+    -- Dispara a rotina absoluta de desligamento no Script de Lógica
     if _G.AkatCallbacks and _G.AkatCallbacks.ShutdownAll then
         _G.AkatCallbacks.ShutdownAll()
     end
@@ -1261,9 +1250,8 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
--- [ATIVAÇÃO INTELIGENTE DO ARRASTO: PERFEITO PARA MOBILE E PC]
-ConfigurarArrastarAkat(mainWrapper, topBar) -- Arraste restrito à barra superior de títulos
-ConfigurarArrastarAkat(FloatBtn, FloatBtn)   -- Botão flutuante arrastável por si mesmo
+ConfigurarArrastarAkat(mainWrapper)
+ConfigurarArrastarAkat(FloatBtn)
 
 task.spawn(function()
     task.wait(0.1)
