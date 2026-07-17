@@ -1,5 +1,5 @@
 -- [[
---     AKAT SCRIPT - UNIVERSAL DYNAMIC UI COMPONENT [v3.5 - REVISADO]
+--     AKAT SCRIPT - UNIVERSAL DYNAMIC UI COMPONENT [v4.0 GLOBAL]
 -- ]]
 
 local Players = game:GetService("Players")
@@ -9,57 +9,18 @@ local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 
 local player = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
-local mouse = player:GetMouse()
-
 local Configs = _G.Configs or {}
 
-local DefaultLocales = {
-    PT = {
-        SearchPlaceholder = "Pesquisar...",
-        ConfirmCloseTitle = "Deseja fechar o script?",
-        ConfirmBtn = "Confirmar",
-        CancelBtn = "Cancelar",
-        Tabs = { Combat = "Combate", Visuals = "Visuais", Movement = "Movimento", Teleports = "Teleportes", Misc = "Diversos" },
-        Options = {
-            AutoShoot = { Title = "Atirar no Murder", Desc = "Ativa o botão flutuante de disparo direto." },
-            Reach = { Title = "Alcance da Faca", Desc = "Aumenta consideravelmente o alcance de ataque com a sua faca." },
-            ESP = { Title = "ESP Jogadores", Desc = "Destaca jogadores pelas paredes." },
-            Speed = { Title = "Velocidade", Desc = "Aumenta a velocidade de caminhada." },
-            AntiFling = { Title = "Anti-Arremesso", Desc = "Bloqueia colisões que tentem te empurrar." },
-            TpToGun = { Title = "Teleportar p/ Arma", Desc = "Inocentes se teleportam para a arma dropada." },
-            SafeSpot = { Title = "Lugar Seguro", Desc = "Cria uma plataforma invisível no céu." },
-            AutoCollect = { Title = "Coletar Moedas", Desc = "Coleta moedas continuamente." },
-            ChatRoles = { Title = "Revelar Funções", Desc = "Envia no chat quem é o Assassino." }
-        },
-        Intro = '<font color="#FFFFFF">Scripts por | </font><font color="#8B0000">Comunidade AKAT</font>'
-    },
-    EN = {
-        SearchPlaceholder = "Search...",
-        ConfirmCloseTitle = "Do you want to close the script?",
-        ConfirmBtn = "Confirm",
-        CancelBtn = "Cancel",
-        Tabs = { Combat = "Combat", Visuals = "Visuals", Movement = "Movement", Teleports = "Teleports", Misc = "Misc" },
-        Options = {
-            AutoShoot = { Title = "Shoot Murderer", Desc = "Enables a floating shoot button." },
-            Reach = { Title = "Knife Reach", Desc = "Significantly increases your knife attack reach." },
-            ESP = { Title = "Player ESP", Desc = "Highlights players through walls." },
-            Speed = { Title = "WalkSpeed", Desc = "Slightly increases player walkspeed smoothly." },
-            AntiFling = { Title = "Anti-Fling", Desc = "Disables collisions to prevent fings." },
-            TpToGun = { Title = "TP to Gun", Desc = "Teleports to dropped gun." },
-            SafeSpot = { Title = "Safe Spot", Desc = "Teleports you to an invisible sky platform." },
-            AutoCollect = { Title = "Auto Collect", Desc = "Smoothly collects coins continuously." },
-            ChatRoles = { Title = "Reveal Roles", Desc = "Sends a message in chat revealing active roles." }
-        },
-        Intro = '<font color="#FFFFFF">Scripts by | </font><font color="#8B0000">AKAT Community</font>'
-    }
+-- Sistema Global: Usa o que o script injetado mandar ou adota termos universais básicos
+local Locales = (_G.UIData and _G.UIData.Locales) or {
+    PT = { SearchPlaceholder = "Pesquisar...", ConfirmCloseTitle = "Fechar Script?", ConfirmBtn = "Confirmar", CancelBtn = "Cancelar" },
+    EN = { SearchPlaceholder = "Search...", ConfirmCloseTitle = "Close Script?", ConfirmBtn = "Confirm", CancelBtn = "Cancel" }
 }
 
-local Locales = (_G.UIData and _G.UIData.Locales) or DefaultLocales
-local MenuTitleText = (_G.UIData and _G.UIData.Title) or "AKAT SCRIPTS"
-local MenuSubtitleText = (_G.UIData and _G.UIData.Subtitle) or "MM2 SCRIPT [BETA v3.2]"
+local MenuTitleText = (_G.UIData and _G.UIData.Title) or "AKAT HUB"
+local MenuSubtitleText = (_G.UIData and _G.UIData.Subtitle) or "Universal Engine 2026"
 
-local currentLanguage = "PT" -- Inicializa em PT por conveniência
+local currentLanguage = "PT"
 local activeTab = ""
 local tabButtons = {}
 local menuAberto = true
@@ -134,54 +95,6 @@ task.spawn(function()
         rot = (rot + 3) % 360
         StrokeGradient.Rotation = rot
     end
-end)
-
-local AutoShootMobileBtn = Instance.new("Frame", screenGui)
-AutoShootMobileBtn.Name = "AutoShootMobileBtn"
-AutoShootMobileBtn.AnchorPoint = Vector2.new(0.5, 0.5)
-AutoShootMobileBtn.Size = UDim2.new(0, 140, 0, 42)
-AutoShootMobileBtn.Position = UDim2.new(0.78, 0, 0.55, 0)
-AutoShootMobileBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-AutoShootMobileBtn.BackgroundTransparency = 0.25
-AutoShootMobileBtn.Visible = false
-AutoShootMobileBtn.ZIndex = 40
-Instance.new("UICorner", AutoShootMobileBtn).CornerRadius = UDim.new(0, 8)
-
-local asBtnStroke = Instance.new("UIStroke", AutoShootMobileBtn)
-asBtnStroke.Thickness = 1.5
-asBtnStroke.Color = Color3.fromRGB(139, 0, 0)
-local asStrokeGradient = Instance.new("UIGradient", asBtnStroke)
-asStrokeGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromHex("#8B0000")),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(15, 15, 15)),
-    ColorSequenceKeypoint.new(1, Color3.fromHex("#8B0000"))
-})
-
-task.spawn(function()
-    local rot = 0
-    while task.wait() do
-        if not asStrokeGradient.Parent then break end
-        rot = (rot + 3) % 360
-        asStrokeGradient.Rotation = rot
-    end
-end)
-
-local asBtnText = Instance.new("TextButton", AutoShootMobileBtn)
-asBtnText.Size = UDim2.new(1, 0, 1, 0)
-asBtnText.BackgroundTransparency = 1
-asBtnText.Text = "Auto Action"
-asBtnText.TextColor3 = Color3.fromRGB(255, 255, 255)
-asBtnText.Font = Enum.Font.GothamBold
-asBtnText.TextSize = 12
-asBtnText.ZIndex = 41
-
-ConfigurarArrastarAkat(AutoShootMobileBtn)
-asBtnText.MouseButton1Click:Connect(function()
-    local info = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    TweenService:Create(AutoShootMobileBtn, info, {Size = UDim2.new(0, 130, 0, 38)}):Play()
-    task.delay(0.1, function() TweenService:Create(AutoShootMobileBtn, info, {Size = UDim2.new(0, 140, 0, 42)}):Play() end)
-    if _G.AkatCallbacks and _G.AkatCallbacks.FireShoot then _G.AkatCallbacks.FireShoot()
-    elseif _G.AkatCallbacks and _G.AkatCallbacks.CustomAction then _G.AkatCallbacks.CustomAction() end
 end)
 
 local mainWrapper = Instance.new("Frame")
@@ -591,16 +504,14 @@ local function AplicarFadeIdiomaModerno(fadeOut, duracao)
         local label = btn:FindFirstChild("Label")
         if label then
             RegistrarTransparencias(label)
-            local orig = originalTrans[label]
-            local t = fadeOut and 1 or (orig and orig.TextTransparency or 0)
+            local t = fadeOut and 1 or (originalTrans[label] and originalTrans[label].TextTransparency or 0)
             TweenService:Create(label, info, {TextTransparency = t}):Play()
         end
     end
     for _, child in ipairs(togglesContainer:GetDescendants()) do
         if child:IsA("TextLabel") then
             RegistrarTransparencias(child)
-            local orig = originalTrans[child]
-            local t = fadeOut and 1 or (orig and orig.TextTransparency or 0)
+            local t = fadeOut and 1 or (originalTrans[child] and originalTrans[child].TextTransparency or 0)
             TweenService:Create(child, info, {TextTransparency = t}):Play()
         end
     end
@@ -621,46 +532,52 @@ local function CriarIconeProcedural(parent, tabName)
     imageLabel.BackgroundTransparency = 1
     imageLabel.ZIndex = 10
     imageLabel.ImageColor3 = Color3.fromRGB(180, 180, 180)
-    
-    if tabName == "Movement" or tabName == "Movimento" then
-        imageLabel.Image = "rbxthumb://type=Asset&id=116118153718196&w=150&h=150"
-    else
-        imageLabel.Image = "rbxthumb://type=Asset&id=96954032676031&w=150&h=150"
-    end
+    imageLabel.Image = "rbxthumb://type=Asset&id=96954032676031&w=150&h=150" -- Ícone universal padrão
 end
 
 local function RecolorirIcone(iconContainer, targetColor, animSpeed)
     if not iconContainer then return end
     for _, child in ipairs(iconContainer:GetDescendants()) do
-        if child.Name == "AccentStroke" and child:IsA("UIStroke") then
-            TweenService:Create(child, animSpeed, {Color = targetColor}):Play()
-        elseif child.Name == "AccentFill" and child:IsA("Frame") then
-            TweenService:Create(child, animSpeed, {BackgroundColor3 = targetColor}):Play()
-        elseif child.Name == "AccentImage" and child:IsA("ImageLabel") then
+        if child.Name == "AccentImage" and child:IsA("ImageLabel") then
             TweenService:Create(child, animSpeed, {ImageColor3 = targetColor}):Play()
         end
     end
 end
 
+-- ==================== TRADUTOR TOTALMENTE GLOBAL E DINÂMICO ====================
 local function AtualizarIdioma()
     local langData = Locales[currentLanguage]
     if not langData then return end
+    
     searchTextBox.PlaceholderText = langData.SearchPlaceholder or "Search..."
+    
+    -- Traduz as abas dinamicamente com base nas chaves passadas
     for tabName, btn in pairs(tabButtons) do
         local label = btn:FindFirstChild("Label")
-        if label then label.Text = (langData.Tabs and langData.Tabs[tabName]) or tabName end
+        if label then 
+            label.Text = (langData.Tabs and langData.Tabs[tabName]) or tabName 
+        end
     end
+    
+    -- Traduz cada interruptor lendo as configurações globais fornecidas
     for _, child in ipairs(togglesContainer:GetChildren()) do
         if child:IsA("Frame") and child.Name ~= "UIListLayout" and child.Name ~= "UIPadding" then
             local configKey = child:GetAttribute("ConfigKey")
-            if configKey and langData.Options and langData.Options[configKey] then
+            if configKey then
                 local titleLabel = child:FindFirstChild("Title")
                 local descLabel  = child:FindFirstChild("Description")
-                if titleLabel then titleLabel.Text = langData.Options[configKey].Title end
-                if descLabel  then descLabel.Text  = langData.Options[configKey].Desc  end
+                
+                if langData.Options and langData.Options[configKey] then
+                    if titleLabel then titleLabel.Text = langData.Options[configKey].Title or configKey end
+                    if descLabel  then descLabel.Text  = langData.Options[configKey].Desc or "" end
+                else
+                    -- Se o script não fornecer tradução, renderiza a própria chave para não bugar vazio
+                    if titleLabel then titleLabel.Text = configKey end
+                end
             end
         end
     end
+    
     confirmLabel.Text = langData.ConfirmCloseTitle or "Close?"
     btnYes.Text = langData.ConfirmBtn or "Yes"
     btnNo.Text  = langData.CancelBtn or "No"
@@ -671,7 +588,7 @@ local function filterToggles(currentActiveTab, query)
     local itemIndex = 0
     for _, child in ipairs(togglesContainer:GetChildren()) do
         if child:IsA("Frame") and child.Name ~= "UIListLayout" and child.Name ~= "UIPadding" then
-            local itemTab = child:GetAttribute("Tab") or "Movement"
+            local itemTab = child:GetAttribute("Tab") or ""
             local shouldBeVisible = false
             if searchQuery ~= "" then
                 local titleLabel = child:FindFirstChild("Title")
@@ -845,9 +762,6 @@ local function createToggle(parent, configKey, tabCategory)
         if _G.AkatCallbacks and _G.AkatCallbacks[configKey] then
             task.spawn(_G.AkatCallbacks[configKey], Configs[configKey])
         end
-        if configKey == "AutoShoot" or configKey == "ActiveSlow" then
-            AutoShootMobileBtn.Visible = Configs[configKey]
-        end
     end)
 end
 
@@ -976,7 +890,7 @@ local function ExecutarIntroAkat()
     IntroText.Font = Enum.Font.GothamBold
     IntroText.TextSize = 26
     IntroText.RichText = true
-    IntroText.Text = Locales[currentLanguage].Intro or "AKAT HUB"
+    IntroText.Text = Locales[currentLanguage].Intro or MenuTitleText
     IntroText.TextTransparency = 1
     IntroText.ZIndex = 501
 
@@ -1009,7 +923,7 @@ local function ExecutarIntroAkat()
         end
     end)
 
-    task.wait(1.5)
+    task.wait(1.2)
     correndoBrilho = false
 
     TweenService:Create(IntroText, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1, Position = UDim2.new(0.5, 0, 0.5, -16)}):Play()
@@ -1067,11 +981,12 @@ AplicarEfeitoFisicoBotao(SearchBtn, Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(MinimizeBtn, Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(CloseBtn, Color3.fromRGB(255, 60, 60))
 
--- ==================== CONSTRUTOR DINÂMICO CORRIGIDO ====================
+-- ==================== MONTAGEM ESTRUTURAL 100% DINÂMICA ====================
 local tabsCriadas = {}
 
 if _G.UIData and _G.UIData.Toggles then
     for _, item in ipairs(_G.UIData.Toggles) do
+        -- Identifica as abas dinamicamente pelo nome colocado no script de execução
         if not tabsCriadas[item.Tab] then
             createTabBtn(item.Tab)
             tabsCriadas[item.Tab] = true
@@ -1080,26 +995,12 @@ if _G.UIData and _G.UIData.Toggles then
         createToggle(togglesContainer, item.Key, item.Tab)
     end
 else
-    -- Fallback Legado MM2
-    activeTab = "Combat"
-    createTabBtn("Combat")
-    createTabBtn("Visuals")
-    createTabBtn("Movement")
-    createTabBtn("Teleports")
-    createTabBtn("Misc")
-
-    createToggle(togglesContainer, "AutoShoot",   "Combat")
-    createToggle(togglesContainer, "Reach",       "Combat")
-    createToggle(togglesContainer, "ESP",         "Visuals")
-    createToggle(togglesContainer, "Speed",       "Movement")
-    createToggle(togglesContainer, "AntiFling",   "Movement")
-    createToggle(togglesContainer, "TpToGun",     "Teleports")
-    createToggle(togglesContainer, "SafeSpot",    "Teleports")
-    createToggle(togglesContainer, "AutoCollect", "Misc")
-    createToggle(togglesContainer, "ChatRoles",   "Misc")
+    -- Fallback de segurança vazio para não carregar scripts alheios (como MM2) por engano
+    createTabBtn("Main")
+    activeTab = "Main"
 end
 
--- Alinha os nomes dinâmicos logo após a montagem da árvore
+-- Inicialização Limpa
 AtualizarIdioma()
 
 local searchOpen = false
