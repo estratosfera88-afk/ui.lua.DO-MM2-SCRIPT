@@ -1,5 +1,5 @@
 -- [[
---     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.3] - OPTIMIZED
+--     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.4] - TOTAL FIX
 --     Hospede este script no GitHub/Pastebin e pegue o link "Raw"
 -- ]]
 
@@ -30,7 +30,6 @@ local Locales = {
             Misc = "Diversos"
         },
         Options = {
-            AutoShoot = { Title = "Atirar no Murder", Desc = "Ativa o botão flutuante de disparo direto e silencioso no Assassino." },
             Reach = { Title = "Alcance da Faca", Desc = "Aumenta consideravelmente o alcance de ataque com a sua faca (18 studs)." },
             ESP = { Title = "ESP Jogadores", Desc = "Destaca jogadores pelas paredes (Xerife Azul / Herói Amarelo)." },
             Speed = { Title = "Velocidade", Desc = "Aumenta a velocidade de caminhada do seu personagem para 23 de forma estável." },
@@ -55,7 +54,6 @@ local Locales = {
             Misc = "Misc"
         },
         Options = {
-            AutoShoot = { Title = "Shoot Murderer", Desc = "Enables a floating shoot button that perfectly hits the Murderer." },
             Reach = { Title = "Knife Reach", Desc = "Significantly increases your knife attack reach (18 studs)." },
             ESP = { Title = "Player ESP", Desc = "Highlights players through walls (Sheriff Blue / Hero Yellow)." },
             Speed = { Title = "WalkSpeed", Desc = "Slightly increases player walkspeed up to 23 smoothly." },
@@ -80,8 +78,7 @@ local Locales = {
             Misc = "Varios"
         },
         Options = {
-            AutoShoot = { Title = "Disparar al Asesino", Desc = "Activa un botão flotante para disparar directo al asesino." },
-            Reach = { Title = "Alcance del Cuchillo", Desc = "Aumenta considerablemente el alcance de ataque con tu cuchillo." },
+            Reach = { Title = "Alcance del Cuchillo", Desc = "Aumenta considerablemente el alcance de ataque com tu cuchillo." },
             ESP = { Title = "ESP Jogadores", Desc = "Resalta jogadores por rol (Sheriff Azul / Héroe Amarillo)." },
             Speed = { Title = "Velocidad", Desc = "Aumenta la velocidad del personagem a 23 de forma fluida." },
             AntiFling = { Title = "Anti-Fling", Desc = "Bloqueia colisiones para evitar que te empujen o lancen." },
@@ -103,6 +100,7 @@ local originalTrans = {}
 local confirmBlur = nil
 local isConfirmOpen = false
 local wasMinimizedBeforeConfirm = false
+local searchOpen = false
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "DeltaAkatUniversalUI"
@@ -175,60 +173,8 @@ StrokeGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(1, Color3.fromHex("#8B0000"))
 })
 
--- OTIMIZAÇÃO: Rotação infinita via engine C++ (0% de uso de CPU no Luau)
 local rotTweenInfo = TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
 TweenService:Create(StrokeGradient, rotTweenInfo, {Rotation = 360}):Play()
-
--- [BOTÃO FLUTUANTE DO AUTO SHOOT MOBILE]
-local AutoShootMobileBtn = Instance.new("Frame", screenGui)
-AutoShootMobileBtn.Name = "AutoShootMobileBtn"
-AutoShootMobileBtn.AnchorPoint = Vector2.new(0.5, 0.5)
-AutoShootMobileBtn.Size = UDim2.new(0, 140, 0, 42)
-AutoShootMobileBtn.Position = UDim2.new(0.78, 0, 0.55, 0)
-AutoShootMobileBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-AutoShootMobileBtn.BackgroundTransparency = 0.25
-AutoShootMobileBtn.Visible = false
-AutoShootMobileBtn.ZIndex = 40
-
-local asBtnCorner = Instance.new("UICorner", AutoShootMobileBtn)
-asBtnCorner.CornerRadius = UDim.new(0, 8)
-
-local asBtnStroke = Instance.new("UIStroke", AutoShootMobileBtn)
-asBtnStroke.Thickness = 1.5
-asBtnStroke.Color = Color3.fromRGB(139, 0, 0)
-
-local asStrokeGradient = Instance.new("UIGradient", asBtnStroke)
-asStrokeGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromHex("#8B0000")),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(15, 15, 15)),
-    ColorSequenceKeypoint.new(1, Color3.fromHex("#8B0000"))
-})
-
--- OTIMIZAÇÃO: Rotação nativa para o botão flutuante secundário
-TweenService:Create(asStrokeGradient, rotTweenInfo, {Rotation = 360}):Play()
-
-local asBtnText = Instance.new("TextButton", AutoShootMobileBtn)
-asBtnText.Size = UDim2.new(1, 0, 1, 0)
-asBtnText.BackgroundTransparency = 1
-asBtnText.Text = "Auto Shoot"
-asBtnText.TextColor3 = Color3.fromRGB(255, 255, 255)
-asBtnText.Font = Enum.Font.GothamBold
-asBtnText.TextSize = 12
-asBtnText.ZIndex = 41
-
-ConfigurarArrastarAkat(AutoShootMobileBtn, asBtnText)
-
-asBtnText.MouseButton1Click:Connect(function()
-    local info = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    TweenService:Create(AutoShootMobileBtn, info, {Size = UDim2.new(0, 130, 0, 38)}):Play()
-    task.delay(0.1, function()
-        TweenService:Create(AutoShootMobileBtn, info, {Size = UDim2.new(0, 140, 0, 42)}):Play()
-    end)
-
-    if _G.AkatCallbacks and _G.AkatCallbacks.FireShoot then
-        _G.AkatCallbacks.FireShoot()
-    end
-end)
 
 -- [ESTRUTURA GERAL DO MENU]
 local mainWrapper = Instance.new("Frame")
@@ -291,7 +237,7 @@ subtitle.Name = "Subtitle"
 subtitle.Size = UDim2.new(0, 200, 0, 14)
 subtitle.Position = UDim2.new(0, 16, 0, 28)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = "MM2 SCRIPT [BETA v3.2]"
+subtitle.Text = "MM2 SCRIPT [BETA v3.4]"
 subtitle.TextColor3 = Color3.fromHex("#8B0000")
 subtitle.TextSize = 10
 subtitle.Font = Enum.Font.Gotham
@@ -301,7 +247,7 @@ subtitle.ZIndex = 6
 local searchBarFrame = Instance.new("Frame", topBar)
 searchBarFrame.Name = "SearchBarFrame"
 searchBarFrame.AnchorPoint = Vector2.new(1, 0.5)
-searchBarFrame.Position = UDim2.new(1, -154, 0.5, 0)
+searchBarFrame.Position = UDim2.new(1, -144, 0.5, 0)
 searchBarFrame.Size = UDim2.new(0, 0, 0, 26)
 searchBarFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 searchBarFrame.ClipsDescendants = true
@@ -326,6 +272,7 @@ searchTextBox.TextXAlignment = Enum.TextXAlignment.Left
 searchTextBox.ZIndex = 8
 
 local topButtons = Instance.new("Frame", topBar)
+topButtons.Name = "TopButtons"
 topButtons.Size = UDim2.new(0, 128, 0, 26)
 topButtons.Position = UDim2.new(1, -144, 0.5, -13)
 topButtons.BackgroundTransparency = 1
@@ -435,23 +382,22 @@ CloseLine2.BorderSizePixel = 0
 CloseLine2.ZIndex = 8
 
 local div = Instance.new("Frame", mainFrame)
+div.Name = "Div"
 div.Size = UDim2.new(1, 0, 0, 1)
 div.Position = UDim2.new(0, 0, 0, 52)
 div.BackgroundColor3 = Color3.fromHex("#121212")
 div.BorderSizePixel = 0
 div.ZIndex = 6
 
--- [SIDEBAR]
+-- [SIDEBAR] (Ajustado posição de 53 para 52 para matar a linha preta de bug)
 local SidebarFrame = Instance.new("Frame", mainFrame)
 SidebarFrame.Name = "SidebarFrame"
-SidebarFrame.Size = UDim2.new(0, 140, 1, -53)
-SidebarFrame.Position = UDim2.new(0, 0, 0, 53)
+SidebarFrame.Size = UDim2.new(0, 140, 1, -52)
+SidebarFrame.Position = UDim2.new(0, 0, 0, 52)
 SidebarFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
 SidebarFrame.BackgroundTransparency = 0.35
 SidebarFrame.BorderSizePixel = 0
 SidebarFrame.ZIndex = 6
--- CORREÇÃO DEFINITIVA: Removido o UICorner deste container. 
--- Sendo reto no topo, elimina de vez os buracos visuais e manchas de transparência dupla.
 
 local SidebarSeparator = Instance.new("Frame", SidebarFrame)
 SidebarSeparator.Size = UDim2.new(0, 1, 1, 0)
@@ -470,7 +416,7 @@ ProfileDiv.ZIndex = 6
 local TabsContainer = Instance.new("ScrollingFrame", SidebarFrame)
 TabsContainer.Name = "TabsContainer"
 TabsContainer.Size = UDim2.new(1, 0, 1, -75)
-TabsContainer.Position = UDim2.new(0, 0, 0, 5)
+TabsContainer.Position = UDim2.new(0, 0, 0, 0)
 TabsContainer.BackgroundTransparency = 1
 TabsContainer.BorderSizePixel = 0
 TabsContainer.ScrollBarThickness = 0
@@ -811,7 +757,7 @@ local function createTabBtn(tabName)
     activeBar.BackgroundColor3 = Color3.fromHex("#8B0000")
     activeBar.BorderSizePixel = 0
     activeBar.Visible = false
-    activeBar.ZIndex = 9
+    activeBar.ZIndex = 12 -- Elevado para cobrir perfeitamente qualquer artefato ou linha indesejada
 
     CriarIconeProcedural(tabBtn, tabName)
     local tabLabel = Instance.new("TextLabel", tabBtn)
@@ -919,11 +865,6 @@ local function createToggle(parent, configKey, tabCategory)
         if _G.AkatCallbacks and _G.AkatCallbacks[configKey] then
             task.spawn(_G.AkatCallbacks[configKey], Configs[configKey])
         end
-
-        -- Atualização interna da interface
-        if configKey == "AutoShoot" then
-            AutoShootMobileBtn.Visible = Configs.AutoShoot
-        end
     end)
 end
 
@@ -943,7 +884,16 @@ local function AlternarConfirmacao(exibir)
         TweenService:Create(confirmBlur, TweenInfo.new(tempoAnim, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 14}):Play()
     else
         AplicarFadeSincronizado(confirmFrame, true, tempoAnim)
-        if confirmBlur then TweenService:Create(confirmBlur, TweenInfo.new(tempoAnim, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 0}):Play() end
+        if confirmBlur then 
+            local blurTween = TweenService:Create(confirmBlur, TweenInfo.new(tempoAnim, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 0})
+            blurTween:Play()
+            blurTween.Completed:Connect(function()
+                if confirmBlur and confirmBlur.Size == 0 then
+                    confirmBlur:Destroy()
+                    confirmBlur = nil
+                end
+            end)
+        end
         if wasMinimizedBeforeConfirm then
             AplicarFadeSincronizado(SidebarFrame, true, 0.15)
             AplicarFadeSincronizado(togglesContainer, true, 0.15)
@@ -960,7 +910,6 @@ local function AlternarConfirmacao(exibir)
         task.delay(tempoAnim, function()
             if not isConfirmOpen then
                 confirmFrame.Visible = false
-                if confirmBlur then confirmBlur:Destroy(); confirmBlur = nil end
             end
         end)
     end
@@ -970,21 +919,47 @@ local function executarMinimizacao()
     if isConfirmOpen then return end
     isMinimized = not isMinimized
     local windowAnim = TweenInfo.new(0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    
+    -- Animação Sincronizada e inteligente para sumir com Idioma e Lupa
     if isMinimized then
+        if searchOpen then
+            searchOpen = false
+            searchTextBox.Text = ""
+            TweenService:Create(searchBarFrame, windowAnim, {Size = UDim2.new(0, 0, 0, 26)}):Play()
+            searchTextBox:ReleaseFocus()
+            filterToggles(activeTab, "")
+        end
+
+        TweenService:Create(LanguageBtn, windowAnim, {Size = UDim2.new(0, 0, 0, 26), BackgroundTransparency = 1, TextTransparency = 1}):Play()
+        TweenService:Create(SearchBtn, windowAnim, {Size = UDim2.new(0, 0, 0, 26), BackgroundTransparency = 1}):Play()
+        TweenService:Create(circleStroke, windowAnim, {Transparency = 1}):Play()
+        TweenService:Create(SearchHandle, windowAnim, {BackgroundTransparency = 1}):Play()
+
         AplicarFadeSincronizado(SidebarFrame, true, 0.1)
         AplicarFadeSincronizado(togglesContainer, true, 0.1)
         TweenService:Create(mainWrapper, windowAnim, {Size = UDim2.new(0, 520, 0, 52)}):Play()
+        
         task.delay(0.1, function()
             if isMinimized then
                 togglesContainer.Visible = false
                 SidebarFrame.Visible = false
                 div.Visible = false
+                LanguageBtn.Visible = false
+                SearchBtn.Visible = false
             end
         end)
     else
         div.Visible = true
         SidebarFrame.Visible = true
         togglesContainer.Visible = true
+        LanguageBtn.Visible = true
+        SearchBtn.Visible = true
+
+        TweenService:Create(LanguageBtn, windowAnim, {Size = UDim2.new(0, 26, 0, 26), BackgroundTransparency = 0, TextTransparency = 0}):Play()
+        TweenService:Create(SearchBtn, windowAnim, {Size = UDim2.new(0, 26, 0, 26), BackgroundTransparency = 0}):Play()
+        TweenService:Create(circleStroke, windowAnim, {Transparency = 0}):Play()
+        TweenService:Create(SearchHandle, windowAnim, {BackgroundTransparency = 0}):Play()
+
         AplicarFadeSincronizado(SidebarFrame, true, 0)
         AplicarFadeSincronizado(togglesContainer, true, 0)
         TweenService:Create(mainWrapper, windowAnim, {Size = UDim2.new(0, 520, 0, 300)}):Play()
@@ -995,6 +970,11 @@ local function executarMinimizacao()
 end
 
 local function alternarVisibilidadeMenu()
+    -- SOLUÇÃO INTELIGENTE DO BORRÃO: Se fechar o menu enquanto a confirmação estiver aberta, desativa o blur imediatamente
+    if isConfirmOpen then
+        AlternarConfirmacao(false)
+    end
+
     menuAberto = not menuAberto
     local tempoAnim = 0.12
     local windowAnim = TweenInfo.new(tempoAnim, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -1155,7 +1135,7 @@ createTabBtn("Movement")
 createTabBtn("Teleports")
 createTabBtn("Misc")
 
-createToggle(togglesContainer, "AutoShoot",   "Combat")
+-- Modificações: Removido por completo o botão e o toggle do Auto Shoot
 createToggle(togglesContainer, "Reach",       "Combat")
 createToggle(togglesContainer, "ESP",         "Visuals")
 createToggle(togglesContainer, "Speed",       "Movement")
@@ -1168,7 +1148,6 @@ createToggle(togglesContainer, "ChatRoles",   "Misc")
 -- Define os textos logo no carregamento inicial
 AtualizarIdioma()
 
-local searchOpen = false
 SearchBtn.MouseButton1Click:Connect(function()
     searchOpen = not searchOpen
     local info = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
