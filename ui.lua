@@ -1,5 +1,5 @@
 -- [[
---     AKAT SCRIPT - UNIVERSAL DYNAMIC UI COMPONENT [v4.0]
+--     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.2]
 --     Hospede este script no GitHub/Pastebin e pegue o link "Raw"
 -- ]]
 
@@ -13,29 +13,22 @@ local player = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local mouse = player:GetMouse()
 
--- Recupera as configurações de callbacks globais criadas pelo Script de Lógica
+-- Recupera as configurações globais criadas pelo Script de Lógica
 local Configs = _G.Configs or {}
 
--- [ESTRUTURA DE CORREÇÃO E FALLBACK SE _G.UIData NÃO EXISTIR]
-local defaultStructure = {
-    Subtitle = "UNIVERSAL HUB [V3.2]",
-    MenuStructure = {
-        { TabKey = "Combat", Toggles = {"AutoShoot", "Reach"} },
-        { TabKey = "Visuals", Toggles = {"ESP"} },
-        { TabKey = "Movement", Toggles = {"Speed", "AntiFling"} },
-        { TabKey = "Teleports", Toggles = {"TpToGun", "SafeSpot"} },
-        { TabKey = "Misc", Toggles = {"AutoCollect", "ChatRoles"} }
-    }
-}
-
--- Locales base com suporte padrão (MM2 Fallback)
 local Locales = {
     PT = {
         SearchPlaceholder = "Pesquisar...",
         ConfirmCloseTitle = "Deseja fechar o script?",
         ConfirmBtn = "Confirmar",
         CancelBtn = "Cancelar",
-        Tabs = { Combat = "Combate", Visuals = "Visuais", Movement = "Movimento", Teleports = "Teleportes", Misc = "Diversos" },
+        Tabs = {
+            Combat = "Combate",
+            Visuals = "Visuais",
+            Movement = "Movimento",
+            Teleports = "Teleportes",
+            Misc = "Diversos"
+        },
         Options = {
             AutoShoot = { Title = "Atirar no Murder", Desc = "Ativa o botão flutuante de disparo direto e silencioso no Assassino." },
             Reach = { Title = "Alcance da Faca", Desc = "Aumenta consideravelmente o alcance de ataque com a sua faca (18 studs)." },
@@ -46,14 +39,21 @@ local Locales = {
             SafeSpot = { Title = "Lugar Seguro", Desc = "Cria uma plataforma invisível no céu para ficar totalmente seguro." },
             AutoCollect = { Title = "Coletar Moedas", Desc = "Coleta moedas continuamente em alta velocidade sem pausas lentas." },
             ChatRoles = { Title = "Revelar Funções", Desc = "Envia no chat quem é o Assassino e o Xerife." }
-        }
+        },
+        Intro = '<font color="#FFFFFF">Scripts por | </font><font color="#8B0000">Comunidade AKAT</font>'
     },
     EN = {
         SearchPlaceholder = "Search...",
         ConfirmCloseTitle = "Do you want to close the script?",
         ConfirmBtn = "Confirm",
         CancelBtn = "Cancel",
-        Tabs = { Combat = "Combat", Visuals = "Visuals", Movement = "Movement", Teleports = "Teleports", Misc = "Misc" },
+        Tabs = {
+            Combat = "Combat",
+            Visuals = "Visuals",
+            Movement = "Movement",
+            Teleports = "Teleports",
+            Misc = "Misc"
+        },
         Options = {
             AutoShoot = { Title = "Shoot Murderer", Desc = "Enables a floating shoot button that perfectly hits the Murderer." },
             Reach = { Title = "Knife Reach", Desc = "Significantly increases your knife attack reach (18 studs)." },
@@ -64,16 +64,23 @@ local Locales = {
             SafeSpot = { Title = "Safe Spot", Desc = "Teleports you to an invisible sky platform to remain completely safe." },
             AutoCollect = { Title = "Auto Collect", Desc = "Smoothly collects coins continuously without clunky visual stops." },
             ChatRoles = { Title = "Reveal Roles", Desc = "Sends a message in chat revealing active roles." }
-        }
+        },
+        Intro = '<font color="#FFFFFF">Scripts by | </font><font color="#8B0000">AKAT Community</font>'
     },
     ES = {
         SearchPlaceholder = "Buscar...",
         ConfirmCloseTitle = "¿Deseas cerrar el script?",
         ConfirmBtn = "Confirmar",
         CancelBtn = "Cancelar",
-        Tabs = { Combat = "Combate", Visuales = "Visuales", Movement = "Movimiento", Teleports = "Teleportes", Misc = "Varios" },
+        Tabs = {
+            Combat = "Combate",
+            Visuales = "Visuales",
+            Movement = "Movimiento",
+            Teleports = "Teleportes",
+            Misc = "Varios"
+        },
         Options = {
-            AutoShoot = { Title = "Disparar al Asesino", Desc = "Activa un botão flotante para disparar directo al asesino." },
+            AutoShoot = { Title = "Disparar al Asesino", Desc = "Activa un botón flotante para disparar directo al asesino." },
             Reach = { Title = "Alcance del Cuchillo", Desc = "Aumenta considerablemente el alcance de ataque con tu cuchillo." },
             ESP = { Title = "ESP Jogadores", Desc = "Resalta jogadores por rol (Sheriff Azul / Héroe Amarillo)." },
             Speed = { Title = "Velocidad", Desc = "Aumenta la velocidad del personagem a 23 de forma fluida." },
@@ -82,33 +89,13 @@ local Locales = {
             SafeSpot = { Title = "Lugar Seguro", Desc = "Te teletransporta a una plataforma invisible en el cielo." },
             AutoCollect = { Title = "Auto Monedas", Desc = "Se mueve continuamente recolectando monedas de forma rápida." },
             ChatRoles = { Title = "Revelar Roles", Desc = "Envía en el chat quién es el Asesino y el Sheriff." }
-        }
+        },
+        Intro = '<font color="#FFFFFF">Scripts por | </font><font color="#8B0000">Comunidad AKAT</font>'
     }
 }
 
--- [MESCLAGEM DINÂMICA DE IDIOMAS DE SCRIPTS EXTERNOS]
-if _G.UIData and _G.UIData.Locales then
-    for langKey, langContent in pairs(_G.UIData.Locales) do
-        if not Locales[langKey] then
-            Locales[langKey] = { Tabs = {}, Options = {} }
-        end
-        Locales[langKey].SearchPlaceholder = langContent.SearchPlaceholder or Locales.EN.SearchPlaceholder
-        Locales[langKey].ConfirmCloseTitle = langContent.ConfirmCloseTitle or Locales.EN.ConfirmCloseTitle
-        Locales[langKey].ConfirmBtn = langContent.ConfirmBtn or Locales.EN.ConfirmBtn
-        Locales[langKey].CancelBtn = langContent.CancelBtn or Locales.EN.CancelBtn
-        
-        if langContent.Tabs then
-            for k, v in pairs(langContent.Tabs) do Locales[langKey].Tabs[k] = v end
-        end
-        if langContent.Options then
-            for k, v in pairs(langContent.Options) do Locales[langKey].Options[k] = v end
-        end
-    end
-end
-
-local uiDataResolved = _G.UIData or defaultStructure
 local currentLanguage = "EN"
-local activeTab = nil
+local activeTab = "Combat"
 local tabButtons = {}
 local menuAberto = true
 local isMinimized = false
@@ -195,7 +182,7 @@ task.spawn(function()
     end
 end)
 
--- [BOTÃO FLUTUANTE DE SUPORTE MOBILE DINÂMICO]
+-- [BOTÃO FLUTUANTE DO AUTO SHOOT MOBILE]
 local AutoShootMobileBtn = Instance.new("Frame", screenGui)
 AutoShootMobileBtn.Name = "AutoShootMobileBtn"
 AutoShootMobileBtn.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -232,7 +219,7 @@ end)
 local asBtnText = Instance.new("TextButton", AutoShootMobileBtn)
 asBtnText.Size = UDim2.new(1, 0, 1, 0)
 asBtnText.BackgroundTransparency = 1
-asBtnText.Text = "Action Trigger"
+asBtnText.Text = "Auto Shoot"
 asBtnText.TextColor3 = Color3.fromRGB(255, 255, 255)
 asBtnText.Font = Enum.Font.GothamBold
 asBtnText.TextSize = 12
@@ -298,10 +285,10 @@ topBar.ZIndex = 6
 
 local title = Instance.new("TextLabel", topBar)
 title.Name = "Title"
-title.Size = UDim2.new(0, 240, 0, 22)
+title.Size = UDim2.new(0, 200, 0, 22)
 title.Position = UDim2.new(0, 16, 0, 10)
 title.BackgroundTransparency = 1
-title.Text = "AKAT SCRIPT" -- TRAVADO GLOBALMENTE CONFORME PEDIDO
+title.Text = "AKAT SCRIPTS"
 title.TextColor3 = Color3.fromHex("#8B0000")
 title.TextSize = 16
 title.Font = Enum.Font.GothamBold
@@ -310,11 +297,11 @@ title.ZIndex = 6
 
 local subtitle = Instance.new("TextLabel", topBar)
 subtitle.Name = "Subtitle"
-subtitle.Size = UDim2.new(0, 240, 0, 14)
+subtitle.Size = UDim2.new(0, 200, 0, 14)
 subtitle.Position = UDim2.new(0, 16, 0, 28)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = tostring(uiDataResolved.Subtitle or "UNIVERSAL COMPONENT") -- PERMITIDO APENAS ALTERAR O SUBTÍTULO
-subtitle.TextColor3 = Color3.fromRGB(160, 160, 160)
+subtitle.Text = "MM2 SCRIPT [BETA v3.2]"
+subtitle.TextColor3 = Color3.fromHex("#8B0000")
 subtitle.TextSize = 10
 subtitle.Font = Enum.Font.Gotham
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -706,8 +693,6 @@ local function CriarIconeProcedural(parent, tabName)
     imageLabel.BackgroundTransparency = 1
     imageLabel.ZIndex = 10
     imageLabel.ImageColor3 = Color3.fromRGB(180, 180, 180)
-    
-    -- Mapeamento dinâmico e flexível de ícones (Aceita novos nomes de abas com um ícone padrão de fallback)
     if tabName == "Movement" then
         imageLabel.Image = "rbxthumb://type=Asset&id=116118153718196&w=150&h=150"
     elseif tabName == "Teleports" then
@@ -718,8 +703,6 @@ local function CriarIconeProcedural(parent, tabName)
         imageLabel.Image = "rbxthumb://type=Asset&id=134099134229815&w=150&h=150"
     elseif tabName == "Combat" then
         imageLabel.Image = "rbxthumb://type=Asset&id=131607049070859&w=150&h=150"
-    else
-        imageLabel.Image = "rbxthumb://type=Asset&id=96954032676031&w=150&h=150" -- Fallback global
     end
 end
 
@@ -940,10 +923,12 @@ local function createToggle(parent, configKey, tabCategory)
         TweenService:Create(switchCircle, anim, {Position = targetPos}):Play()
         TweenService:Create(switchTrack, anim, {BackgroundColor3 = targetColor}):Play()
         
+        -- EXECUTA A FUNÇÃO DE LÓGICA PELO BRIDGE GLOBAL
         if _G.AkatCallbacks and _G.AkatCallbacks[configKey] then
             task.spawn(_G.AkatCallbacks[configKey], Configs[configKey])
         end
 
+        -- Atualização interna da interface
         if configKey == "AutoShoot" then
             AutoShootMobileBtn.Visible = Configs.AutoShoot
         end
@@ -1075,7 +1060,7 @@ local function ExecutarIntroAkat()
     IntroText.Font = Enum.Font.GothamBold
     IntroText.TextSize = 26
     IntroText.RichText = true
-    IntroText.Text = '<font color="#FFFFFF">Scripts por | </font><font color="#8B0000">Comunidade AKAT</font>' -- ESTRUTURA REQUERIDA FIXA GLOBALMENTE
+    IntroText.Text = Locales[currentLanguage].Intro
     IntroText.TextTransparency = 1
     IntroText.ZIndex = 501
 
@@ -1133,13 +1118,7 @@ local function ExecutarIntroAkat()
     AplicarFadeSincronizado(mainWrapper, false, 0.12)
     local openTween = TweenService:Create(mainWrapper, fastOpen, {Size = UDim2.new(0, 520, 0, 300)})
     openTween:Play()
-    
-    -- Inicialização Dinâmica da Primeira Aba Registrada
-    local activeInitialTab = "Combat"
-    if uiDataResolved.MenuStructure and uiDataResolved.MenuStructure[1] then
-        activeInitialTab = uiDataResolved.MenuStructure[1].TabKey
-    end
-    openTween.Completed:Connect(function() selectTab(activeInitialTab) end)
+    openTween.Completed:Connect(function() selectTab("Combat") end)
 end
 
 local function AplicarEfeitoFisicoBotao(btn, hoverColor)
@@ -1178,13 +1157,21 @@ AplicarEfeitoFisicoBotao(SearchBtn, Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(MinimizeBtn, Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(CloseBtn, Color3.fromRGB(255, 60, 60))
 
--- [MONTAGEM AUTOMÁTICA DA ESTRUTURA COM BASE NO MENU CARREGADO]
-for _, tabData in ipairs(uiDataResolved.MenuStructure) do
-    createTabBtn(tabData.TabKey)
-    for _, configKey in ipairs(tabData.Toggles) do
-        createToggle(togglesContainer, configKey, tabData.TabKey)
-    end
-end
+createTabBtn("Combat")
+createTabBtn("Visuals")
+createTabBtn("Movement")
+createTabBtn("Teleports")
+createTabBtn("Misc")
+
+createToggle(togglesContainer, "AutoShoot",   "Combat")
+createToggle(togglesContainer, "Reach",       "Combat")
+createToggle(togglesContainer, "ESP",         "Visuals")
+createToggle(togglesContainer, "Speed",       "Movement")
+createToggle(togglesContainer, "AntiFling",   "Movement")
+createToggle(togglesContainer, "TpToGun",     "Teleports")
+createToggle(togglesContainer, "SafeSpot",    "Teleports")
+createToggle(togglesContainer, "AutoCollect", "Misc")
+createToggle(togglesContainer, "ChatRoles",   "Misc")
 
 local searchOpen = false
 SearchBtn.MouseButton1Click:Connect(function()
@@ -1213,18 +1200,9 @@ LanguageBtn.MouseButton1Click:Connect(function()
     AplicarFadeIdiomaModerno(true, 0.14)
     task.wait(0.14)
     
-    -- Varre as chaves existentes de idiomas dinamicamente para alternar sem tabelas fixas
-    local availableLanguages = {}
-    for langCode, _ in pairs(Locales) do
-        table.insert(availableLanguages, langCode)
-    end
-    table.sort(availableLanguages)
-    
-    local index = table.find(availableLanguages, currentLanguage) or 1
-    index = index + 1
-    if index > #availableLanguages then index = 1 end
-    
-    currentLanguage = availableLanguages[index] or "EN"
+    if currentLanguage == "EN" then currentLanguage = "PT"
+    elseif currentLanguage == "PT" then currentLanguage = "ES"
+    else currentLanguage = "EN" end
     LanguageBtn.Text = currentLanguage
     
     AtualizarIdioma()
@@ -1258,6 +1236,7 @@ btnYes.MouseButton1Click:Connect(function()
     TweenService:Create(FloatBtn, TweenInfo.new(syncTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {ImageTransparency = 1}):Play()
     task.wait(syncTime)
     
+    -- Dispara a rotina absoluta de desligamento no Script de Lógica
     if _G.AkatCallbacks and _G.AkatCallbacks.ShutdownAll then
         _G.AkatCallbacks.ShutdownAll()
     end
