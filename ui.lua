@@ -30,7 +30,7 @@ local UI_TEXT = {
         Misc = "Misc"
     },
     Options = {
-        AutoShoot = { Title = "Shoot Murderer", Desc = "Enables automatic silent targeting that perfectly hits the Murderer." },
+        AutoShoot = { Title = "Aimbot Murderer", Desc = "Automatic aimbot that stays in the murderer's head non-stop." },
         Reach = { Title = "Knife Reach", Desc = "Significantly increases your knife attack reach (18 studs)." },
         ESP = { Title = "Player ESP", Desc = "Highlights players through walls (Sheriff Blue / Hero Yellow)." },
         Speed = { Title = "WalkSpeed", Desc = "Slightly increases player walkspeed up to 23 smoothly." },
