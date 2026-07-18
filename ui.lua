@@ -1,6 +1,7 @@
 -- [[
 --     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.6] - ULTRA OPTIMIZED
 --     FIXED: CanvasGroup corner clipping, synchronized search bar frame slide, seamless premium animations
+--     UPDATED: Symmetrical option backgrounds, blurred black top buttons, and softened float animation
 -- ]]
 
 local Players = game:GetService("Players")
@@ -148,7 +149,6 @@ shadow3D.SliceCenter = Rect.new(49, 49, 450, 450)
 shadow3D.ZIndex = 1
 shadow3D.Parent = mainWrapper
 
--- MODIFICADO: De 'Frame' para 'CanvasGroup' para forçar o corte (clipping) perfeito das bordas arredondadas e remover a ponta solta
 local mainFrame = Instance.new("CanvasGroup")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -234,11 +234,13 @@ searchTextBox.TextSize = 11
 searchTextBox.TextXAlignment = Enum.TextXAlignment.Left
 searchTextBox.ZIndex = 8
 
+-- [BOTÕES SUPERIORES COM ESTILO PRETO BORRADO / GLASS]
 local SearchBtn = Instance.new("TextButton", topButtons)
 SearchBtn.Name = "SearchBtn"
 SearchBtn.LayoutOrder = 1
 SearchBtn.Size = UDim2.new(0, 26, 0, 26)
-SearchBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+SearchBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+SearchBtn.BackgroundTransparency = 0.5
 SearchBtn.Text = ""
 SearchBtn.ZIndex = 7
 Instance.new("UICorner", SearchBtn).CornerRadius = UDim.new(0, 5)
@@ -275,7 +277,8 @@ local MinimizeBtn = Instance.new("TextButton", topButtons)
 MinimizeBtn.Name = "MinimizeBtn"
 MinimizeBtn.LayoutOrder = 2
 MinimizeBtn.Size = UDim2.new(0, 26, 0, 26)
-MinimizeBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+MinimizeBtn.BackgroundTransparency = 0.5
 MinimizeBtn.Text = ""
 MinimizeBtn.ZIndex = 7
 Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 5)
@@ -293,7 +296,8 @@ local CloseBtn = Instance.new("TextButton", topButtons)
 CloseBtn.Name = "CloseBtn"
 CloseBtn.LayoutOrder = 3
 CloseBtn.Size = UDim2.new(0, 26, 0, 26)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+CloseBtn.BackgroundTransparency = 0.5
 CloseBtn.Text = ""
 CloseBtn.ZIndex = 7
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 5)
@@ -609,7 +613,7 @@ local function filterToggles(currentActiveTab, query)
                         if not child or not child.Parent then return end
                         TweenService:Create(child, TweenInfo.new(0.2, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
                             Size = UDim2.new(1, -8, 0, 56),
-                            BackgroundTransparency = 0.15
+                            BackgroundTransparency = 0.35 -- SINCRONIZADO COM A SIDEBAR
                         }):Play()
                         if t then TweenService:Create(t, TweenInfo.new(0.15), {TextTransparency = 0}):Play() end
                         if d then TweenService:Create(d, TweenInfo.new(0.15), {TextTransparency = 0}):Play() end
@@ -705,8 +709,8 @@ local function createToggle(parent, configKey, tabCategory)
     local toggleFrame = Instance.new("Frame")
     toggleFrame.Name = configKey
     toggleFrame.Size = UDim2.new(1, -8, 0, 56)
-    toggleFrame.BackgroundColor3 = Color3.fromHex("#0F0F0F")
-    toggleFrame.BackgroundTransparency = 0.15
+    toggleFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 8) -- MESMO FUNDO DA SIDEBAR
+    toggleFrame.BackgroundTransparency = 0.35 -- MESMA TRANSPARÊNCIA DA SIDEBAR
     toggleFrame.ZIndex = 6
     toggleFrame:SetAttribute("Tab", tabCategory)
     toggleFrame:SetAttribute("ConfigKey", configKey)
@@ -828,12 +832,11 @@ end
 local function executarMinimizacao()
     if isConfirmOpen then return end
     isMinimized = not isMinimized
-    local windowAnim = TweenInfo.new(0.16, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out) -- MODIFICADO: Estilo Cubic deixa a transição linear/premium e constante
+    local windowAnim = TweenInfo.new(0.16, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
     
     if isMinimized then
         searchOpen = false
         searchTextBox.Text = ""
-        -- MODIFICADO: Reduz o tamanho e move a posição da linha para acompanhar a retração dos botões (-96 de offset) de forma síncrona
         TweenService:Create(searchBarFrame, windowAnim, {Size = UDim2.new(0, 0, 0, 26), Position = UDim2.new(1, -96, 0.5, 0)}):Play()
         searchTextBox:ReleaseFocus()
         filterToggles(activeTab, "")
@@ -861,9 +864,8 @@ local function executarMinimizacao()
         SearchBtn.Visible = true
         searchBarFrame.Visible = true
 
-        -- MODIFICADO: Move a posição da linha de volta para o local original (-130 de offset) sincronizado com a expansão do botão de busca
         TweenService:Create(searchBarFrame, windowAnim, {Size = UDim2.new(0, 0, 0, 26), Position = UDim2.new(1, -130, 0.5, 0)}):Play()
-        TweenService:Create(SearchBtn, windowAnim, {Size = UDim2.new(0, 26, 0, 26), BackgroundTransparency = 0}):Play()
+        TweenService:Create(SearchBtn, windowAnim, {Size = UDim2.new(0, 26, 0, 26), BackgroundTransparency = 0.5}):Play()
         TweenService:Create(circleStroke, windowAnim, {Transparency = 0}):Play()
         TweenService:Create(SearchHandle, windowAnim, {BackgroundTransparency = 0}):Play()
 
@@ -882,14 +884,13 @@ local function alternarVisibilidadeMenu()
     end
 
     menuAberto = not menuAberto
-    local tempoAnim = 0.14 -- MODIFICADO: Animação ligeiramente acelerada para maior responsividade
-    local windowAnim = TweenInfo.new(tempoAnim, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out) -- MODIFICADO: EasingStyle.Cubic remove o efeito elástico/pulante e estabiliza o frame
+    local tempoAnim = 0.14
+    local windowAnim = TweenInfo.new(tempoAnim, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
     if menuAberto then
         mainWrapper.Visible = true
         togglesContainer.Visible = false
         SidebarFrame.Visible = false
         div.Visible = false
-        -- MODIFICADO: Removido o encolhimento drástico para 480. Começa discretamente menor (514) apenas para dar o feedback de profundidade sem tremer ou pular na tela
         mainWrapper.Size = UDim2.new(0, 514, 0, isMinimized and 49 or 294)
         AplicarFadeSincronizado(mainWrapper, true, 0)
         AplicarFadeSincronizado(mainWrapper, false, tempoAnim)
@@ -1000,9 +1001,10 @@ local function ExecutarIntroAkat()
     openTween.Completed:Connect(function() selectTab("Combat") end)
 end
 
+-- [EFEITO HOVER ATUALIZADO PARA RESPEITAR O PRETO BORRADO]
 local function AplicarEfeitoFisicoBotao(btn, hoverColor)
     btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Cubic), {BackgroundColor3 = Color3.fromRGB(36, 36, 36)}):Play()
+        TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Cubic), {BackgroundColor3 = Color3.fromRGB(36, 36, 36), BackgroundTransparency = 0.3}):Play()
         if btn.Name == "MinimizeBtn" then
             TweenService:Create(btn.Line, TweenInfo.new(0.15, Enum.EasingStyle.Cubic), {BackgroundColor3 = hoverColor}):Play()
         elseif btn.Name == "SearchBtn" then
@@ -1014,7 +1016,7 @@ local function AplicarEfeitoFisicoBotao(btn, hoverColor)
         end
     end)
     btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Cubic), {BackgroundColor3 = Color3.fromRGB(24, 24, 24)}):Play()
+        TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Cubic), {BackgroundColor3 = Color3.fromRGB(10, 10, 10), BackgroundTransparency = 0.5}):Play()
         if btn.Name == "MinimizeBtn" then
             TweenService:Create(btn.Line, TweenInfo.new(0.15, Enum.EasingStyle.Cubic), {BackgroundColor3 = Color3.fromHex("#A0A0A0")}):Play()
         elseif btn.Name == "SearchBtn" then
@@ -1100,11 +1102,12 @@ btnYes.MouseButton1Click:Connect(function()
     screenGui:Destroy()
 end)
 
+-- [ANIMAÇÃO SUAVE E MENOS PULANTE PARA O BOTÃO FLUTUANTE]
 local function AnimarCliqueFloatBtn()
     local originalSize = UDim2.new(0, 44, 0, 44)
-    local targetSize   = UDim2.new(0, 36, 0, 36)
-    local shrink = TweenService:Create(FloatBtn, TweenInfo.new(0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = targetSize})
-    local expand = TweenService:Create(FloatBtn, TweenInfo.new(0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = originalSize})
+    local targetSize   = UDim2.new(0, 41, 0, 41) -- Encolhimento sutil de apenas 3 pixels
+    local shrink = TweenService:Create(FloatBtn, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = targetSize})
+    local expand = TweenService:Create(FloatBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = originalSize})
     shrink:Play()
     local c; c = shrink.Completed:Connect(function() expand:Play(); c:Disconnect() end)
 end
