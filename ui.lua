@@ -167,7 +167,7 @@ topBar.Name = "TopBar"
 topBar.Size = UDim2.new(1, 0, 0, 52)
 topBar.BackgroundTransparency = 1
 topBar.ZIndex = 6
-topBar.ClipsDescendants = true -- FIX DA PONTA: Impede elementos de saírem do arredondamento
+topBar.ClipsDescendants = true
 
 local title = Instance.new("TextLabel", topBar)
 title.Name = "Title"
@@ -329,19 +329,37 @@ local div = Instance.new("Frame", mainFrame)
 div.Name = "Div"
 div.Size = UDim2.new(1, 0, 0, 1)
 div.Position = UDim2.new(0, 0, 0, 52)
-div.BackgroundColor3 = Color3.fromRGB(35, 35, 35) -- Cor mais forte e perceptível
+div.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 div.BorderSizePixel = 0
 div.ZIndex = 6
 
--- [SIDEBAR]
+-- [SIDEBAR] - CORREÇÃO DA PONTA (Fundo híbrido anti-vazamento)
 local SidebarFrame = Instance.new("Frame", mainFrame)
 SidebarFrame.Name = "SidebarFrame"
 SidebarFrame.Size = UDim2.new(0, 140, 1, -52)
 SidebarFrame.Position = UDim2.new(0, 0, 0, 52)
-SidebarFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-SidebarFrame.BackgroundTransparency = 0.35
+SidebarFrame.BackgroundTransparency = 1
 SidebarFrame.BorderSizePixel = 0
 SidebarFrame.ZIndex = 6
+
+local SidebarLeftBg = Instance.new("Frame", SidebarFrame)
+SidebarLeftBg.Name = "SidebarLeftBg"
+SidebarLeftBg.Size = UDim2.new(1, -20, 1, 0)
+SidebarLeftBg.Position = UDim2.new(0, 0, 0, 0)
+SidebarLeftBg.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+SidebarLeftBg.BackgroundTransparency = 0.35
+SidebarLeftBg.BorderSizePixel = 0
+SidebarLeftBg.ZIndex = 6
+Instance.new("UICorner", SidebarLeftBg).CornerRadius = UDim.new(0, 9)
+
+local SidebarRightBg = Instance.new("Frame", SidebarFrame)
+SidebarRightBg.Name = "SidebarRightBg"
+SidebarRightBg.Size = UDim2.new(0, 20, 1, 0)
+SidebarRightBg.Position = UDim2.new(1, -20, 0, 0)
+SidebarRightBg.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+SidebarRightBg.BackgroundTransparency = 0.35
+SidebarRightBg.BorderSizePixel = 0
+SidebarRightBg.ZIndex = 6
 
 local SidebarSeparator = Instance.new("Frame", SidebarFrame)
 SidebarSeparator.Size = UDim2.new(0, 1, 1, 0)
@@ -563,9 +581,9 @@ local function CriarIconeProcedural(parent, tabName)
     imageLabel.ZIndex = 10
     imageLabel.ImageColor3 = Color3.fromRGB(180, 180, 180)
     
-    -- CONFIGURAÇÃO DA IMAGEM DA ABA PLAYER ATUALIZADA
+    -- CONFIGURAÇÃO DA IMAGEM DA ABA PLAYER RE-ATUALIZADA
     if tabName == "Player" then
-        imageLabel.Image = "rbxthumb://type=Asset&id=138092289004405&w=150&h=150"
+        imageLabel.Image = "rbxthumb://type=Asset&id=90990715951376&w=150&h=150"
     elseif tabName == "Teleports" then
         imageLabel.Image = "rbxthumb://type=Asset&id=131357413318360&w=150&h=150"
     elseif tabName == "Misc" then
@@ -817,7 +835,7 @@ local function AlternarConfirmacao(exibir)
             AplicarFadeSincronizado(SidebarFrame, true, 0.15)
             AplicarFadeSincronizado(togglesContainer, true, 0.15)
             isMinimized = true
-            TweenService:Create(mainWrapper, TweenInfo.new(0.2, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = UDim2.new(0, 520, 0, 52)}):Play()
+            TweenService:Create(mainWrapper, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 520, 0, 52)}):Play()
             task.delay(0.15, function()
                 if isMinimized then
                     togglesContainer.Visible = false
@@ -837,7 +855,7 @@ end
 local function executarMinimizacao()
     if isConfirmOpen then return end
     isMinimized = not isMinimized
-    local windowAnim = TweenInfo.new(0.16, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
+    local windowAnim = TweenInfo.new(0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     
     if isMinimized then
         searchOpen = false
@@ -871,7 +889,7 @@ local function executarMinimizacao()
         SidebarFrame.Visible = true
         togglesContainer.Visible = true
         SearchBtn.Visible = true
-        searchBarFrame.Visible = searchOpen -- Mantém oculto se o search não estiver aberto
+        searchBarFrame.Visible = searchOpen
 
         TweenService:Create(searchBarFrame, windowAnim, {Size = searchOpen and UDim2.new(0, 160, 0, 26) or UDim2.new(0, 0, 0, 26), Position = UDim2.new(1, -130, 0.5, 0)}):Play()
         TweenService:Create(SearchBtn, windowAnim, {Size = UDim2.new(0, 26, 0, 26), BackgroundTransparency = 0.5}):Play()
@@ -881,8 +899,8 @@ local function executarMinimizacao()
         AplicarFadeSincronizado(SidebarFrame, true, 0)
         AplicarFadeSincronizado(togglesContainer, true, 0)
         TweenService:Create(mainWrapper, windowAnim, {Size = UDim2.new(0, 520, 0, 300)}):Play()
-        AplicarFadeSincronizado(SidebarFrame, false, 0.16)
-        AplicarFadeSincronizado(togglesContainer, false, 0.16)
+        AplicarFadeSincronizado(SidebarFrame, false, 0.22)
+        AplicarFadeSincronizado(togglesContainer, false, 0.22)
         filterToggles(activeTab, searchTextBox.Text)
     end
 end
@@ -1007,7 +1025,7 @@ local function ExecutarIntroAkat()
     AplicarFadeSincronizado(mainWrapper, false, 0.14)
     local openTween = TweenService:Create(mainWrapper, fastOpen, {Size = UDim2.new(0, 520, 0, 300)})
     openTween:Play()
-    openTween.Completed:Connect(function() selectTab("Player") end) -- Abre direto na Player primeiro
+    openTween.Completed:Connect(function() selectTab("Player") end)
 end
 
 -- [EFEITO HOVER ATUALIZADO PARA RESPEITAR O PRETO BORRADO]
@@ -1059,10 +1077,11 @@ createToggle(togglesContainer, "SafeSpot",    "Teleports")
 createToggle(togglesContainer, "AutoCollect", "Misc")
 createToggle(togglesContainer, "ChatRoles",   "Misc")
 
+-- ANIMAÇÃO DE PESQUISA PREMIUM (MUDADA PARA QUINTIC ULTRA-FLUIDA)
 SearchBtn.MouseButton1Click:Connect(function()
     if isMinimized then return end
     searchOpen = not searchOpen
-    local info = TweenInfo.new(0.25, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
+    local info = TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
     if searchOpen then
         searchBarFrame.Visible = true
         TweenService:Create(searchBarFrame, info, {Size = UDim2.new(0, 160, 0, 26)}):Play()
@@ -1075,7 +1094,7 @@ SearchBtn.MouseButton1Click:Connect(function()
         filterToggles(activeTab, "")
         tween.Completed:Connect(function()
             if not searchOpen then
-                searchBarFrame.Visible = false -- Oculta completamente após fechar para tirar o risco
+                searchBarFrame.Visible = false
             end
         end)
     end
@@ -1095,7 +1114,7 @@ CloseBtn.MouseButton1Click:Connect(function()
         searchBarFrame.Visible = searchOpen
         AplicarFadeSincronizado(SidebarFrame, false, 0.15)
         AplicarFadeSincronizado(togglesContainer, false, 0.15)
-        TweenService:Create(mainWrapper, TweenInfo.new(0.2, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = UDim2.new(0, 520, 0, 300)}):Play()
+        TweenService:Create(mainWrapper, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 520, 0, 300)}):Play()
         AlternarConfirmacao(true)
     else
         AlternarConfirmacao(true)
