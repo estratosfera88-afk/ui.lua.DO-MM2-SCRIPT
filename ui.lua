@@ -1,7 +1,7 @@
 -- [[
 --     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.6] - ULTRA OPTIMIZED
 --     FIXED: CanvasGroup corner clipping, synchronized search bar frame slide, seamless premium animations
---     UPDATED: Symmetrical option backgrounds, blurred black top buttons, and softened float animation
+--     UPDATED: Symmetrical option backgrounds, blurred black top buttons, softened float animation, fixed multi-touch & sidebar clipping
 -- ]]
 
 local Players = game:GetService("Players")
@@ -71,23 +71,29 @@ screenGui.Parent = uiParent
 
 local function ConfigurarArrastarAkat(inst, trigger)
     trigger = trigger or inst
+    local dragging = false
+    local dragStart, startPos, currentInput
+    
     trigger.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            local dragStart = input.Position
-            local startPos = inst.Position
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not dragging then
+            dragging = true
+            currentInput = input
+            dragStart = input.Position
+            startPos = inst.Position
             
             local dragConnection
             local endConnection
             
             dragConnection = UserInputService.InputChanged:Connect(function(changedInput)
-                if changedInput.UserInputType == Enum.UserInputType.MouseMovement or changedInput.UserInputType == Enum.UserInputType.Touch then
+                if changedInput == currentInput or (currentInput.UserInputType == Enum.UserInputType.MouseButton1 and changedInput.UserInputType == Enum.UserInputType.MouseMovement) then
                     local delta = changedInput.Position - dragStart
                     inst.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
                 end
             end)
             
-            endConnection = input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
+            endConnection = currentInput.Changed:Connect(function()
+                if currentInput.UserInputState == Enum.UserInputState.End then
+                    dragging = false
                     if dragConnection then dragConnection:Disconnect() end
                     if endConnection then endConnection:Disconnect() end
                 end
@@ -333,7 +339,7 @@ div.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 div.BorderSizePixel = 0
 div.ZIndex = 6
 
--- [SIDEBAR] - CORREÇÃO DA PONTA (Fundo híbrido anti-vazamento)
+-- [SIDEBAR] - CORREÇÃO DA PONTA (Fundo híbrido anti-vazamento ajustado)
 local SidebarFrame = Instance.new("Frame", mainFrame)
 SidebarFrame.Name = "SidebarFrame"
 SidebarFrame.Size = UDim2.new(0, 140, 1, -52)
@@ -344,7 +350,7 @@ SidebarFrame.ZIndex = 6
 
 local SidebarLeftBg = Instance.new("Frame", SidebarFrame)
 SidebarLeftBg.Name = "SidebarLeftBg"
-SidebarLeftBg.Size = UDim2.new(1, -20, 1, 0)
+SidebarLeftBg.Size = UDim2.new(1, 0, 1, 0) -- FIX: Alterado de (1, -20) para (1, 0) para remover o recorte interno que gerava os dois bugs visuais
 SidebarLeftBg.Position = UDim2.new(0, 0, 0, 0)
 SidebarLeftBg.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
 SidebarLeftBg.BackgroundTransparency = 0.35
@@ -359,7 +365,7 @@ SidebarRightBg.Position = UDim2.new(1, -20, 0, 0)
 SidebarRightBg.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
 SidebarRightBg.BackgroundTransparency = 0.35
 SidebarRightBg.BorderSizePixel = 0
-SidebarRightBg.ZIndex = 6
+SidebarRightBg.ZIndex = 6.5 -- Ajustado levemente acima para mascarar os cantos do lado direito perfeit
 
 local SidebarSeparator = Instance.new("Frame", SidebarFrame)
 SidebarSeparator.Size = UDim2.new(0, 1, 1, 0)
@@ -987,19 +993,6 @@ local function ExecutarIntroAkat()
     task.wait(0.5)
 
     local correndoBrilho = true
-    task.spawn(function()
-        local i1 = TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-        while correndoBrilho do
-            local t1 = TweenService:Create(IntroText, i1, {TextTransparency = 0.4})
-            local t2 = TweenService:Create(IntroLine, i1, {BackgroundTransparency = 0.4})
-            t1:Play(); t2:Play(); t1.Completed:Wait()
-            if not correndoBrilho then break end
-            local t3 = TweenService:Create(IntroText, i1, {TextTransparency = 0})
-            local t4 = TweenService:Create(IntroLine, i1, {BackgroundTransparency = 0})
-            t3:Play(); t4:Play(); t3.Completed:Wait()
-        end
-    end)
-
     task.wait(1.5)
     correndoBrilho = false
 
@@ -1019,7 +1012,7 @@ local function ExecutarIntroAkat()
     FloatBtn.Visible = true
 
     AplicarFadeSincronizado(mainWrapper, true, 0)
-    mainWrapper.Size = UDim2.new(0, 514, 0, 294)
+    mainWrapper.Size = UDim2.new(0, 520, 0, 300)
 
     local fastOpen = TweenInfo.new(0.14, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
     AplicarFadeSincronizado(mainWrapper, false, 0.14)
