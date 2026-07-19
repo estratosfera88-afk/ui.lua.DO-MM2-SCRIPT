@@ -330,7 +330,7 @@ CloseLine2.BackgroundColor3 = Color3.fromHex("#A0A0A0")
 CloseLine2.BorderSizePixel = 0
 CloseLine2.ZIndex = 8
 
--- [LINHA DIVISÓRIA] - OTIMIZADA E MAIS FORTE
+-- [LINHA DIVISÓRIA]
 local div = Instance.new("Frame", mainFrame)
 div.Name = "Div"
 div.Size = UDim2.new(1, 0, 0, 1)
@@ -339,7 +339,7 @@ div.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 div.BorderSizePixel = 0
 div.ZIndex = 6
 
--- [SIDEBAR] - CORREÇÃO DA PONTA (Fundo híbrido anti-vazamento ajustado)
+-- [SIDEBAR] - FIX: Unificado para remover a linha escura e dupla transparência
 local SidebarFrame = Instance.new("Frame", mainFrame)
 SidebarFrame.Name = "SidebarFrame"
 SidebarFrame.Size = UDim2.new(0, 140, 1, -52)
@@ -348,24 +348,14 @@ SidebarFrame.BackgroundTransparency = 1
 SidebarFrame.BorderSizePixel = 0
 SidebarFrame.ZIndex = 6
 
-local SidebarLeftBg = Instance.new("Frame", SidebarFrame)
-SidebarLeftBg.Name = "SidebarLeftBg"
-SidebarLeftBg.Size = UDim2.new(1, 0, 1, 0) -- FIX: Alterado de (1, -20) para (1, 0) para remover o recorte interno que gerava os dois bugs visuais
-SidebarLeftBg.Position = UDim2.new(0, 0, 0, 0)
-SidebarLeftBg.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-SidebarLeftBg.BackgroundTransparency = 0.35
-SidebarLeftBg.BorderSizePixel = 0
-SidebarLeftBg.ZIndex = 6
-Instance.new("UICorner", SidebarLeftBg).CornerRadius = UDim.new(0, 9)
-
-local SidebarRightBg = Instance.new("Frame", SidebarFrame)
-SidebarRightBg.Name = "SidebarRightBg"
-SidebarRightBg.Size = UDim2.new(0, 20, 1, 0)
-SidebarRightBg.Position = UDim2.new(1, -20, 0, 0)
-SidebarRightBg.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-SidebarRightBg.BackgroundTransparency = 0.35
-SidebarRightBg.BorderSizePixel = 0
-SidebarRightBg.ZIndex = 6.5 -- Ajustado levemente acima para mascarar os cantos do lado direito perfeit
+local SidebarBg = Instance.new("Frame", SidebarFrame)
+SidebarBg.Name = "SidebarBg"
+SidebarBg.Size = UDim2.new(1, 0, 1, 0)
+SidebarBg.Position = UDim2.new(0, 0, 0, 0)
+SidebarBg.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+SidebarBg.BackgroundTransparency = 0.35
+SidebarBg.BorderSizePixel = 0
+SidebarBg.ZIndex = 6
 
 local SidebarSeparator = Instance.new("Frame", SidebarFrame)
 SidebarSeparator.Size = UDim2.new(0, 1, 1, 0)
@@ -587,7 +577,6 @@ local function CriarIconeProcedural(parent, tabName)
     imageLabel.ZIndex = 10
     imageLabel.ImageColor3 = Color3.fromRGB(180, 180, 180)
     
-    -- CONFIGURAÇÃO DA IMAGEM DA ABA PLAYER RE-ATUALIZADA
     if tabName == "Player" then
         imageLabel.Image = "rbxthumb://type=Asset&id=90990715951376&w=150&h=150"
     elseif tabName == "Teleports" then
@@ -687,14 +676,16 @@ local function createTabBtn(tabName)
     tabBtn.ZIndex = 8
     tabBtn.AutoButtonColor = false
 
+    -- FIX: Ajustado o indicador com UICorner e deslocado 2px para a direita eliminando o corte pontiagudo do canto do menu
     local activeBar = Instance.new("Frame", tabBtn)
     activeBar.Name = "ActiveBar"
-    activeBar.Size = UDim2.new(0, 3, 1, 0)
-    activeBar.Position = UDim2.new(0, 0, 0, 0)
+    activeBar.Size = UDim2.new(0, 3, 1, -8)
+    activeBar.Position = UDim2.new(0, 2, 0, 4)
     activeBar.BackgroundColor3 = Color3.fromHex("#8B0000")
     activeBar.BorderSizePixel = 0
     activeBar.Visible = false
     activeBar.ZIndex = 12 
+    Instance.new("UICorner", activeBar).CornerRadius = UDim.new(0, 2)
 
     CriarIconeProcedural(tabBtn, tabName)
     local tabLabel = Instance.new("TextLabel", tabBtn)
@@ -741,6 +732,7 @@ local function createToggle(parent, configKey, tabCategory)
     toggleFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
     toggleFrame.BackgroundTransparency = 0.35
     toggleFrame.ZIndex = 6
+    toggleFrame.ClipsDescendants = true -- FIX: Texto não vaza mais dos limites do frame nas transições
     toggleFrame:SetAttribute("Tab", tabCategory)
     toggleFrame:SetAttribute("ConfigKey", configKey)
     toggleFrame.Parent = parent
@@ -866,7 +858,8 @@ local function executarMinimizacao()
     if isMinimized then
         searchOpen = false
         searchTextBox.Text = ""
-        local tween = TweenService:Create(searchBarFrame, windowAnim, {Size = UDim2.new(0, 0, 0, 26), Position = UDim2.new(1, -96, 0.5, 0)})
+        -- FIX: Sincronizada a posição horizontal do fechamento para evitar movimentos laterais errados
+        local tween = TweenService:Create(searchBarFrame, windowAnim, {Size = UDim2.new(0, 0, 0, 26), Position = UDim2.new(1, -130, 0.5, 0)})
         tween:Play()
         tween.Completed:Connect(function()
             if isMinimized then searchBarFrame.Visible = false end
@@ -924,7 +917,8 @@ local function alternarVisibilidadeMenu()
         togglesContainer.Visible = false
         SidebarFrame.Visible = false
         div.Visible = false
-        mainWrapper.Size = UDim2.new(0, 514, 0, isMinimized and 49 or 294)
+        -- FIX: Padronizado as dimensões iniciais para 520 de largura eliminando trepidação visual
+        mainWrapper.Size = UDim2.new(0, 520, 0, isMinimized and 52 or 300)
         AplicarFadeSincronizado(mainWrapper, true, 0)
         AplicarFadeSincronizado(mainWrapper, false, tempoAnim)
         local pop = TweenService:Create(mainWrapper, windowAnim, {Size = UDim2.new(0, 520, 0, isMinimized and 52 or 300)})
@@ -944,7 +938,7 @@ local function alternarVisibilidadeMenu()
         SidebarFrame.Visible = false
         div.Visible = false
         AplicarFadeSincronizado(mainWrapper, true, tempoAnim)
-        local hide = TweenService:Create(mainWrapper, windowAnim, {Size = UDim2.new(0, 514, 0, isMinimized and 49 or 294)})
+        local hide = TweenService:Create(mainWrapper, windowAnim, {Size = UDim2.new(0, 520, 0, isMinimized and 52 or 300)})
         hide:Play()
         hide.Completed:Connect(function()
             if not menuAberto then mainWrapper.Visible = false end
@@ -1053,7 +1047,7 @@ AplicarEfeitoFisicoBotao(SearchBtn, Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(MinimizeBtn, Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(CloseBtn, Color3.fromRGB(255, 60, 60))
 
--- ORDEM DE CRIAÇÃO (PLAYER EM PRIMEIRO LUGAR)
+-- ORDEM DE CRIAÇÃO
 createTabBtn("Player")
 createTabBtn("Combat")
 createTabBtn("Visuals")
