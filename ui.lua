@@ -167,6 +167,7 @@ topBar.Name = "TopBar"
 topBar.Size = UDim2.new(1, 0, 0, 52)
 topBar.BackgroundTransparency = 1
 topBar.ZIndex = 6
+topBar.ClipsDescendants = true -- FIX DA PONTA: Impede elementos de saírem do arredondamento
 
 local title = Instance.new("TextLabel", topBar)
 title.Name = "Title"
@@ -214,7 +215,7 @@ searchBarFrame.Position = UDim2.new(1, -130, 0.5, 0)
 searchBarFrame.Size = UDim2.new(0, 0, 0, 26)
 searchBarFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 searchBarFrame.ClipsDescendants = true
-searchBarFrame.Visible = false  -- CORREÇÃO DA PONTA: Inicializa falso para sumir com a linha
+searchBarFrame.Visible = false
 searchBarFrame.ZIndex = 7
 Instance.new("UICorner", searchBarFrame).CornerRadius = UDim.new(0, 13)
 local searchStroke = Instance.new("UIStroke", searchBarFrame)
@@ -562,9 +563,9 @@ local function CriarIconeProcedural(parent, tabName)
     imageLabel.ZIndex = 10
     imageLabel.ImageColor3 = Color3.fromRGB(180, 180, 180)
     
-    -- CONFIGURAÇÃO DA IMAGEM DA ABA PLAYER SOLICITADA
+    -- CONFIGURAÇÃO DA IMAGEM DA ABA PLAYER ATUALIZADA
     if tabName == "Player" then
-        imageLabel.Image = "rbxthumb://type=Asset&id=115725775016712&w=150&h=150"
+        imageLabel.Image = "rbxthumb://type=Asset&id=138092289004405&w=150&h=150"
     elseif tabName == "Teleports" then
         imageLabel.Image = "rbxthumb://type=Asset&id=131357413318360&w=150&h=150"
     elseif tabName == "Misc" then
