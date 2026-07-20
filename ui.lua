@@ -1,6 +1,6 @@
 -- [[
 --     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.6] - ULTRA OPTIMIZED & FIXED
---     FIXED: CanvasGroup corner clipping, divider bleed, scrolling frame auto-canvas, rounded tab click states.
+--     FIXED: Divider line positioning (no longer crosses sidebar/player tab), active tab background retention on restore/unminimize.
 -- ]]
 
 local Players = game:GetService("Players")
@@ -331,11 +331,11 @@ CloseLine2.BackgroundColor3 = Color3.fromHex("#A0A0A0")
 CloseLine2.BorderSizePixel = 0
 CloseLine2.ZIndex = 8
 
--- [FIX: LINHA DIVISÓRIA COM RECUO PARA NÃO ATRAVESSAR AS BORDAS ARREDONDADAS]
+-- [FIX: LINHA DIVISÓRIA POSICIONADA APENAS NO PAINEL DIREITO PARA NÃO ATRAVESSAR AS ABAS]
 local div = Instance.new("Frame", mainFrame)
 div.Name = "Div"
-div.Size = UDim2.new(1, -24, 0, 1)
-div.Position = UDim2.new(0, 12, 0, 52)
+div.Size = UDim2.new(1, -152, 0, 1)
+div.Position = UDim2.new(0, 140, 0, 52)
 div.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 div.BorderSizePixel = 0
 div.ZIndex = 6
@@ -388,7 +388,6 @@ TabsLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TabsLayout.Padding = UDim.new(0, 4)
 TabsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- FIX: Atualização precisa da área de rolagem das abas
 TabsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     TabsContainer.CanvasSize = UDim2.new(0, 0, 0, TabsLayout.AbsoluteContentSize.Y + 8)
 end)
@@ -462,7 +461,6 @@ local uiPadding = Instance.new("UIPadding", togglesContainer)
 uiPadding.PaddingBottom = UDim.new(0, 8)
 uiPadding.PaddingRight = UDim.new(0, 4)
 
--- FIX: Atualização dinâmica do tamanho da rolagem do painel principal
 containerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     togglesContainer.CanvasSize = UDim2.new(0, 0, 0, containerLayout.AbsoluteContentSize.Y + 16)
 end)
@@ -649,6 +647,7 @@ local function filterToggles(currentActiveTab, query)
     end
 end
 
+-- FIX: ATUALIZAÇÃO DO SELETORES DE ABAS PARA RETER A TRANSPARÊNCIA ORIGINAL AO REABRIR/UNMINIMIZE
 local function selectTab(tabName)
     activeTab = tabName
     local animSpeed = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -657,12 +656,20 @@ local function selectTab(tabName)
         local iconContainer = btn:FindFirstChild("Icon")
         local activeBar = btn:FindFirstChild("ActiveBar")
         if name == tabName then
-            TweenService:Create(btn, animSpeed, {BackgroundColor3 = Color3.fromRGB(24, 15, 15), BackgroundTransparency = 0.4}):Play()
+            local targetTrans = 0.4
+            if originalTrans[btn] then
+                originalTrans[btn].BackgroundTransparency = targetTrans
+            end
+            TweenService:Create(btn, animSpeed, {BackgroundColor3 = Color3.fromRGB(24, 15, 15), BackgroundTransparency = targetTrans}):Play()
             if label then TweenService:Create(label, animSpeed, {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play() end
             if activeBar then activeBar.Visible = true end
             RecolorirIcone(iconContainer, Color3.fromRGB(255, 255, 255), animSpeed)
         else
-            TweenService:Create(btn, animSpeed, {BackgroundColor3 = Color3.fromRGB(12, 12, 12), BackgroundTransparency = 1}):Play()
+            local targetTrans = 1
+            if originalTrans[btn] then
+                originalTrans[btn].BackgroundTransparency = targetTrans
+            end
+            TweenService:Create(btn, animSpeed, {BackgroundColor3 = Color3.fromRGB(12, 12, 12), BackgroundTransparency = targetTrans}):Play()
             if label then TweenService:Create(label, animSpeed, {TextColor3 = Color3.fromRGB(180, 180, 180)}):Play() end
             if activeBar then activeBar.Visible = false end
             RecolorirIcone(iconContainer, Color3.fromRGB(180, 180, 180), animSpeed)
@@ -673,7 +680,6 @@ local function selectTab(tabName)
     filterToggles(tabName, "")
 end
 
--- FIX: CRIAÇÃO DAS ABAS COM BORDAS ARREDONDADAS E INDICADOR ALINHADO
 local function createTabBtn(tabName)
     local tabBtn = Instance.new("TextButton", TabsContainer)
     tabBtn.Name = tabName .. "TabBtn"
@@ -684,10 +690,8 @@ local function createTabBtn(tabName)
     tabBtn.ZIndex = 8
     tabBtn.AutoButtonColor = false
 
-    -- FIX: Cantos arredondados no fundo do botão da aba ao passar o mouse ou selecionar
     Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 6)
 
-    -- FIX: Indicador lateral com cantos arredondados e alinhamento centralizado
     local activeBar = Instance.new("Frame", tabBtn)
     activeBar.Name = "ActiveBar"
     activeBar.AnchorPoint = Vector2.new(0, 0.5)
