@@ -1,9 +1,6 @@
 -- [[
---     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.6] - ULTRA OPTIMIZED
---     FIXED: CanvasGroup corner clipping, synchronized search bar frame slide, seamless premium animations
---     UPDATED: Symmetrical option backgrounds, blurred black top buttons, softened float animation, fixed multi-touch & sidebar clipping
---     REMOVED: Double borders on sidebar and profile frame for cleaner aesthetics
---     FIXED VISUAL: Unified sidebar background to prevent pixel gaps and double-corner glitches.
+--     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.6] - ULTRA OPTIMIZED & FIXED
+--     FIXED: CanvasGroup corner clipping, divider bleed, scrolling frame auto-canvas, rounded tab click states.
 -- ]]
 
 local Players = game:GetService("Players")
@@ -60,7 +57,8 @@ screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 
 local uiParent = player:FindFirstChild("PlayerGui")
-if gethui then uiParent = gethui()
+if gethui then 
+    uiParent = gethui()
 else
     local ok, cg = pcall(function() return game:GetService("CoreGui") end)
     if ok and cg then uiParent = cg end
@@ -333,12 +331,12 @@ CloseLine2.BackgroundColor3 = Color3.fromHex("#A0A0A0")
 CloseLine2.BorderSizePixel = 0
 CloseLine2.ZIndex = 8
 
--- [LINHA DIVISÓRIA UPPER]
+-- [FIX: LINHA DIVISÓRIA COM RECUO PARA NÃO ATRAVESSAR AS BORDAS ARREDONDADAS]
 local div = Instance.new("Frame", mainFrame)
 div.Name = "Div"
-div.Size = UDim2.new(1, 0, 0, 1)
-div.Position = UDim2.new(0, 0, 0, 52)
-div.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+div.Size = UDim2.new(1, -24, 0, 1)
+div.Position = UDim2.new(0, 12, 0, 52)
+div.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 div.BorderSizePixel = 0
 div.ZIndex = 6
 
@@ -350,8 +348,6 @@ SidebarFrame.Position = UDim2.new(0, 0, 0, 52)
 SidebarFrame.BackgroundTransparency = 1
 SidebarFrame.BorderSizePixel = 0
 SidebarFrame.ZIndex = 6
-
--- [FIX: FUNDO UNIFICADO SEM ENCRUZILHADAS DE PIXEL OU DUPLO CORNER RADIUS]
 SidebarFrame.ClipsDescendants = true
 
 local SidebarBgContainer = Instance.new("Frame", SidebarFrame)
@@ -368,16 +364,16 @@ SidebarCorner.Parent = SidebarBgContainer
 
 local SidebarSeparator = Instance.new("Frame", SidebarFrame)
 SidebarSeparator.Size = UDim2.new(0, 1, 1, 0)
-SidebarSeparator.Position = UDim2.new(1, 0, 0, 0)
-SidebarSeparator.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+SidebarSeparator.Position = UDim2.new(1, -1, 0, 0)
+SidebarSeparator.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 SidebarSeparator.BorderSizePixel = 0
 SidebarSeparator.ZIndex = 6
 
--- [TABS CONTAINER]
+-- [TABS CONTAINER & FIXED SCROLLING]
 local TabsContainer = Instance.new("ScrollingFrame", SidebarFrame)
 TabsContainer.Name = "TabsContainer"
 TabsContainer.Size = UDim2.new(1, 0, 1, -66)
-TabsContainer.Position = UDim2.new(0, 0, 0, 0)
+TabsContainer.Position = UDim2.new(0, 0, 0, 6)
 TabsContainer.BackgroundTransparency = 1
 TabsContainer.BorderSizePixel = 0
 TabsContainer.ZIndex = 7
@@ -386,12 +382,16 @@ TabsContainer.ElasticBehavior = Enum.ElasticBehavior.Never
 TabsContainer.ScrollBarThickness = 2
 TabsContainer.ScrollBarImageColor3 = Color3.fromRGB(139, 0, 0)
 TabsContainer.ScrollBarImageTransparency = 0.4
-pcall(function() TabsContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y end)
 
 local TabsLayout = Instance.new("UIListLayout", TabsContainer)
 TabsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TabsLayout.Padding = UDim.new(0, 0)
+TabsLayout.Padding = UDim.new(0, 4)
 TabsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+-- FIX: Atualização precisa da área de rolagem das abas
+TabsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    TabsContainer.CanvasSize = UDim2.new(0, 0, 0, TabsLayout.AbsoluteContentSize.Y + 8)
+end)
 
 -- [USER PROFILE CONTAINER]
 local UserProfileFrame = Instance.new("Frame", SidebarFrame)
@@ -439,18 +439,19 @@ UsernameLabel.TextXAlignment = Enum.TextXAlignment.Left
 UsernameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 UsernameLabel.ZIndex = 8
 
+-- [TOGGLES CONTAINER & FIXED SCROLLBAR]
 local togglesContainer = Instance.new("ScrollingFrame", mainFrame)
 togglesContainer.Name = "TogglesContainer"
-togglesContainer.Size = UDim2.new(1, -156, 1, -66)
-togglesContainer.Position = UDim2.new(0, 148, 0, 58)
+togglesContainer.Size = UDim2.new(1, -152, 1, -62)
+togglesContainer.Position = UDim2.new(0, 146, 0, 58)
 togglesContainer.BackgroundTransparency = 1
 togglesContainer.BorderSizePixel = 0
-togglesContainer.ScrollBarThickness = 2
+togglesContainer.ScrollBarThickness = 3
 togglesContainer.ScrollBarImageColor3 = Color3.fromRGB(139, 0, 0)
+togglesContainer.ScrollBarImageTransparency = 0.2
 togglesContainer.ZIndex = 6
 togglesContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
 togglesContainer.ElasticBehavior = Enum.ElasticBehavior.Never
-pcall(function() togglesContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y end)
 
 local containerLayout = Instance.new("UIListLayout", togglesContainer)
 containerLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -459,6 +460,12 @@ containerLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
 local uiPadding = Instance.new("UIPadding", togglesContainer)
 uiPadding.PaddingBottom = UDim.new(0, 8)
+uiPadding.PaddingRight = UDim.new(0, 4)
+
+-- FIX: Atualização dinâmica do tamanho da rolagem do painel principal
+containerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    togglesContainer.CanvasSize = UDim2.new(0, 0, 0, containerLayout.AbsoluteContentSize.Y + 16)
+end)
 
 local confirmFrame = Instance.new("Frame", mainFrame)
 confirmFrame.Name = "ConfirmFrame"
@@ -565,8 +572,8 @@ end
 local function CriarIconeProcedural(parent, tabName)
     local iconContainer = Instance.new("Frame", parent)
     iconContainer.Name = "Icon"
-    iconContainer.Size = UDim2.new(0, 20, 0, 20) 
-    iconContainer.Position = UDim2.new(0, 12, 0.5, -10)
+    iconContainer.Size = UDim2.new(0, 18, 0, 18) 
+    iconContainer.Position = UDim2.new(0, 12, 0.5, -9)
     iconContainer.BackgroundTransparency = 1
     iconContainer.ZIndex = 9
     
@@ -644,7 +651,7 @@ end
 
 local function selectTab(tabName)
     activeTab = tabName
-    local animSpeed = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local animSpeed = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     for name, btn in pairs(tabButtons) do
         local label = btn:FindFirstChild("Label")
         local iconContainer = btn:FindFirstChild("Icon")
@@ -666,31 +673,37 @@ local function selectTab(tabName)
     filterToggles(tabName, "")
 end
 
+-- FIX: CRIAÇÃO DAS ABAS COM BORDAS ARREDONDADAS E INDICADOR ALINHADO
 local function createTabBtn(tabName)
     local tabBtn = Instance.new("TextButton", TabsContainer)
     tabBtn.Name = tabName .. "TabBtn"
-    tabBtn.Size = UDim2.new(1, 0, 0, 36)
+    tabBtn.Size = UDim2.new(1, -12, 0, 34)
     tabBtn.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
     tabBtn.BackgroundTransparency = 1
     tabBtn.Text = ""
     tabBtn.ZIndex = 8
     tabBtn.AutoButtonColor = false
 
+    -- FIX: Cantos arredondados no fundo do botão da aba ao passar o mouse ou selecionar
+    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 6)
+
+    -- FIX: Indicador lateral com cantos arredondados e alinhamento centralizado
     local activeBar = Instance.new("Frame", tabBtn)
     activeBar.Name = "ActiveBar"
-    activeBar.Size = UDim2.new(0, 3, 1, -8)
-    activeBar.Position = UDim2.new(0, 2, 0, 4)
+    activeBar.AnchorPoint = Vector2.new(0, 0.5)
+    activeBar.Size = UDim2.new(0, 3, 0, 18)
+    activeBar.Position = UDim2.new(0, 2, 0.5, 0)
     activeBar.BackgroundColor3 = Color3.fromHex("#8B0000")
     activeBar.BorderSizePixel = 0
     activeBar.Visible = false
     activeBar.ZIndex = 12 
-    Instance.new("UICorner", activeBar).CornerRadius = UDim.new(0, 2)
+    Instance.new("UICorner", activeBar).CornerRadius = UDim.new(1, 0)
 
     CriarIconeProcedural(tabBtn, tabName)
     local tabLabel = Instance.new("TextLabel", tabBtn)
     tabLabel.Name = "Label"
-    tabLabel.Size = UDim2.new(1, -50, 1, 0) 
-    tabLabel.Position = UDim2.new(0, 42, 0, 0) 
+    tabLabel.Size = UDim2.new(1, -44, 1, 0) 
+    tabLabel.Position = UDim2.new(0, 38, 0, 0) 
     tabLabel.BackgroundTransparency = 1
     tabLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
     tabLabel.Font = Enum.Font.GothamMedium
@@ -943,7 +956,7 @@ local function alternarVisibilidadeMenu()
     end
 end
 
--- [NOME ANIMAÇÃO: CINEMATIC TEXT MASK REVEAL]
+-- [INTRO ANIMATION]
 local function ExecutarIntroAkat()
     local Blur = Instance.new("BlurEffect")
     Blur.Size = 0
@@ -955,7 +968,6 @@ local function ExecutarIntroAkat()
     IntroFrame.BackgroundTransparency = 1
     IntroFrame.ZIndex = 500
 
-    -- Container invisível para clipping (efeito revelar de baixo pra cima)
     local MaskContainer = Instance.new("Frame", IntroFrame)
     MaskContainer.AnchorPoint = Vector2.new(0.5, 0.5)
     MaskContainer.Position = UDim2.new(0.5, 0, 0.5, -10)
@@ -966,7 +978,7 @@ local function ExecutarIntroAkat()
 
     local IntroText = Instance.new("TextLabel", MaskContainer)
     IntroText.Size = UDim2.new(1, 0, 1, 0)
-    IntroText.Position = UDim2.new(0, 0, 1, 0) -- Começa escondido abaixo do corte da caixa
+    IntroText.Position = UDim2.new(0, 0, 1, 0)
     IntroText.BackgroundTransparency = 1
     IntroText.Font = Enum.Font.GothamBold
     IntroText.TextSize = 26
@@ -984,20 +996,16 @@ local function ExecutarIntroAkat()
     IntroLine.ZIndex = 503
     Instance.new("UICorner", IntroLine).CornerRadius = UDim.new(1, 0)
 
-    -- Fase 1: Fade-in do background embaçado
     TweenService:Create(IntroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0.15}):Play()
     TweenService:Create(Blur, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 14}):Play()
     task.wait(0.1)
 
-    -- Fase 2: O texto desliza elegantemente para cima (Reveal)
     TweenService:Create(IntroText, TweenInfo.new(0.85, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
     task.wait(0.2)
 
-    -- Fase 3: Linha de acento se expande suavemente pelas laterais
     TweenService:Create(IntroLine, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0, Size = UDim2.new(0, 260, 0, 2)}):Play()
     task.wait(1.6) 
 
-    -- Fase 4: Desfazendo com Fade-out suave
     TweenService:Create(IntroText, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
     TweenService:Create(IntroLine, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 2), BackgroundTransparency = 1}):Play()
     task.wait(0.3)
@@ -1018,7 +1026,6 @@ local function ExecutarIntroAkat()
     AplicarFadeSincronizado(mainWrapper, true, 0)
     mainWrapper.Size = UDim2.new(0, 520, 0, 300)
 
-    -- Fase 5: Menu principal abre com um efeito Bounce controlado
     AplicarFadeSincronizado(mainWrapper, false, 0.35)
     local openScale = TweenService:Create(MainScale, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1})
     local openTween = TweenService:Create(mainWrapper, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 520, 0, 300)})
