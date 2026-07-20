@@ -163,9 +163,12 @@ mainFrame.BackgroundTransparency = 0.22
 mainFrame.BorderSizePixel = 0
 mainFrame.ZIndex = 5
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 9)
+
+-- FIX: Modificado o stroke para devorar pixels residuais do canvasgroup, corrigindo a pontinha afiada
 local frameStroke = Instance.new("UIStroke", mainFrame)
 frameStroke.Color = Color3.fromHex("#161616")
-frameStroke.Thickness = 1
+frameStroke.Thickness = 1.2
+frameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border 
 mainFrame.Parent = mainWrapper
 
 local topBar = Instance.new("Frame", mainFrame)
@@ -242,7 +245,6 @@ searchTextBox.TextSize = 11
 searchTextBox.TextXAlignment = Enum.TextXAlignment.Left
 searchTextBox.ZIndex = 8
 
--- [BOTÕES SUPERIORES COM ESTILO PRETO BORRADO / GLASS]
 local SearchBtn = Instance.new("TextButton", topButtons)
 SearchBtn.Name = "SearchBtn"
 SearchBtn.LayoutOrder = 1
@@ -339,7 +341,7 @@ div.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 div.BorderSizePixel = 0
 div.ZIndex = 6
 
--- [SIDEBAR] - FIX: Unificado para remover a linha escura e dupla transparência
+-- [SIDEBAR]
 local SidebarFrame = Instance.new("Frame", mainFrame)
 SidebarFrame.Name = "SidebarFrame"
 SidebarFrame.Size = UDim2.new(0, 140, 1, -52)
@@ -348,14 +350,27 @@ SidebarFrame.BackgroundTransparency = 1
 SidebarFrame.BorderSizePixel = 0
 SidebarFrame.ZIndex = 6
 
-local SidebarBg = Instance.new("Frame", SidebarFrame)
-SidebarBg.Name = "SidebarBg"
-SidebarBg.Size = UDim2.new(1, 0, 1, 0)
-SidebarBg.Position = UDim2.new(0, 0, 0, 0)
-SidebarBg.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-SidebarBg.BackgroundTransparency = 0.35
-SidebarBg.BorderSizePixel = 0
-SidebarBg.ZIndex = 6
+-- FIX: Fundo da Sidebar dividido em dois frames visuais perfeitos para arredondar apenas a ponta inferior esquerda e manter a direita reta sem transparência vazando.
+local SidebarBgContainer = Instance.new("Frame", SidebarFrame)
+SidebarBgContainer.Name = "SidebarBgContainer"
+SidebarBgContainer.Size = UDim2.new(1, 0, 1, 0)
+SidebarBgContainer.BackgroundTransparency = 1
+SidebarBgContainer.ZIndex = 6
+
+local SidebarBgRoundedLeft = Instance.new("Frame", SidebarBgContainer)
+SidebarBgRoundedLeft.Size = UDim2.new(1, -10, 1, 0)
+SidebarBgRoundedLeft.Position = UDim2.new(0, 0, 0, 0)
+SidebarBgRoundedLeft.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+SidebarBgRoundedLeft.BackgroundTransparency = 0.35
+SidebarBgRoundedLeft.BorderSizePixel = 0
+Instance.new("UICorner", SidebarBgRoundedLeft).CornerRadius = UDim.new(0, 9)
+
+local SidebarBgSquareRight = Instance.new("Frame", SidebarBgContainer)
+SidebarBgSquareRight.Size = UDim2.new(0, 10, 1, 0)
+SidebarBgSquareRight.Position = UDim2.new(1, -10, 0, 0)
+SidebarBgSquareRight.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+SidebarBgSquareRight.BackgroundTransparency = 0.35
+SidebarBgSquareRight.BorderSizePixel = 0
 
 local SidebarSeparator = Instance.new("Frame", SidebarFrame)
 SidebarSeparator.Size = UDim2.new(0, 1, 1, 0)
@@ -501,7 +516,6 @@ btnNo.Text = UI_TEXT.CancelBtn
 btnNo.ZIndex = 51
 Instance.new("UICorner", btnNo).CornerRadius = UDim.new(0, 6)
 
--- [FUNÇÕES DA UI OTIMIZADAS]
 local function RegistrarTransparencias(objeto)
     if originalTrans[objeto] then return end
     if objeto:IsA("Frame") or objeto:IsA("ScrollingFrame") or objeto:IsA("CanvasGroup") then
@@ -566,10 +580,12 @@ end
 local function CriarIconeProcedural(parent, tabName)
     local iconContainer = Instance.new("Frame", parent)
     iconContainer.Name = "Icon"
-    iconContainer.Size = UDim2.new(0, 16, 0, 16)
-    iconContainer.Position = UDim2.new(0, 12, 0.5, -8)
+    -- FIX: Aumentado tamanho dos ícones conforme solicitado
+    iconContainer.Size = UDim2.new(0, 20, 0, 20) 
+    iconContainer.Position = UDim2.new(0, 12, 0.5, -10)
     iconContainer.BackgroundTransparency = 1
     iconContainer.ZIndex = 9
+    
     local imageLabel = Instance.new("ImageLabel", iconContainer)
     imageLabel.Name = "AccentImage"
     imageLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -676,7 +692,6 @@ local function createTabBtn(tabName)
     tabBtn.ZIndex = 8
     tabBtn.AutoButtonColor = false
 
-    -- FIX: Ajustado o indicador com UICorner e deslocado 2px para a direita eliminando o corte pontiagudo do canto do menu
     local activeBar = Instance.new("Frame", tabBtn)
     activeBar.Name = "ActiveBar"
     activeBar.Size = UDim2.new(0, 3, 1, -8)
@@ -690,8 +705,9 @@ local function createTabBtn(tabName)
     CriarIconeProcedural(tabBtn, tabName)
     local tabLabel = Instance.new("TextLabel", tabBtn)
     tabLabel.Name = "Label"
-    tabLabel.Size = UDim2.new(1, -44, 1, 0)
-    tabLabel.Position = UDim2.new(0, 36, 0, 0)
+    -- FIX: Ajuste do label distanciando do ícone que agora é maior
+    tabLabel.Size = UDim2.new(1, -50, 1, 0) 
+    tabLabel.Position = UDim2.new(0, 42, 0, 0) 
     tabLabel.BackgroundTransparency = 1
     tabLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
     tabLabel.Font = Enum.Font.GothamMedium
@@ -732,7 +748,7 @@ local function createToggle(parent, configKey, tabCategory)
     toggleFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
     toggleFrame.BackgroundTransparency = 0.35
     toggleFrame.ZIndex = 6
-    toggleFrame.ClipsDescendants = true -- FIX: Texto não vaza mais dos limites do frame nas transições
+    toggleFrame.ClipsDescendants = true 
     toggleFrame:SetAttribute("Tab", tabCategory)
     toggleFrame:SetAttribute("ConfigKey", configKey)
     toggleFrame.Parent = parent
@@ -858,7 +874,6 @@ local function executarMinimizacao()
     if isMinimized then
         searchOpen = false
         searchTextBox.Text = ""
-        -- FIX: Sincronizada a posição horizontal do fechamento para evitar movimentos laterais errados
         local tween = TweenService:Create(searchBarFrame, windowAnim, {Size = UDim2.new(0, 0, 0, 26), Position = UDim2.new(1, -130, 0.5, 0)})
         tween:Play()
         tween.Completed:Connect(function()
@@ -917,7 +932,6 @@ local function alternarVisibilidadeMenu()
         togglesContainer.Visible = false
         SidebarFrame.Visible = false
         div.Visible = false
-        -- FIX: Padronizado as dimensões iniciais para 520 de largura eliminando trepidação visual
         mainWrapper.Size = UDim2.new(0, 520, 0, isMinimized and 52 or 300)
         AplicarFadeSincronizado(mainWrapper, true, 0)
         AplicarFadeSincronizado(mainWrapper, false, tempoAnim)
@@ -946,58 +960,71 @@ local function alternarVisibilidadeMenu()
     end
 end
 
+-- FIX: Melhorias absolutas da Intro! Utilizando sistema Elastic de escalas (60FPS+)
 local function ExecutarIntroAkat()
     local Blur = Instance.new("BlurEffect")
     Blur.Size = 0
     Blur.Parent = Lighting
 
     local IntroFrame = Instance.new("Frame", screenGui)
-    IntroFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    IntroFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     IntroFrame.Size = UDim2.new(1, 0, 1, 0)
-    IntroFrame.BackgroundColor3 = Color3.fromHex("#0A0A0A")
+    IntroFrame.BackgroundColor3 = Color3.fromHex("#050505")
     IntroFrame.BackgroundTransparency = 1
     IntroFrame.ZIndex = 500
 
-    local IntroText = Instance.new("TextLabel", IntroFrame)
-    IntroText.AnchorPoint = Vector2.new(0.5, 0.5)
-    IntroText.Size = UDim2.new(0, 600, 0, 80)
-    IntroText.Position = UDim2.new(0.5, 0, 0.5, -10)
+    local CenterContainer = Instance.new("Frame", IntroFrame)
+    CenterContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+    CenterContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
+    CenterContainer.Size = UDim2.new(0, 300, 0, 100)
+    CenterContainer.BackgroundTransparency = 1
+    
+    local TextScale = Instance.new("UIScale", CenterContainer)
+    TextScale.Scale = 0.85
+
+    local IntroText = Instance.new("TextLabel", CenterContainer)
+    IntroText.Size = UDim2.new(1, 0, 1, -20)
+    IntroText.Position = UDim2.new(0, 0, 0, -10)
     IntroText.BackgroundTransparency = 1
     IntroText.Font = Enum.Font.GothamBold
-    IntroText.TextSize = 26
+    IntroText.TextSize = 28
     IntroText.RichText = true
     IntroText.Text = UI_TEXT.Intro
     IntroText.TextTransparency = 1
     IntroText.ZIndex = 501
 
-    local IntroLine = Instance.new("Frame", IntroFrame)
+    local IntroLine = Instance.new("Frame", CenterContainer)
     IntroLine.AnchorPoint = Vector2.new(0.5, 0.5)
-    IntroLine.Position = UDim2.new(0.5, 0, 0.5, 30)
+    IntroLine.Position = UDim2.new(0.5, 0, 1, -15)
     IntroLine.Size = UDim2.new(0, 0, 0, 2)
     IntroLine.BackgroundColor3 = Color3.fromHex("#8B0000")
     IntroLine.BorderSizePixel = 0
     IntroLine.BackgroundTransparency = 1
     IntroLine.ZIndex = 502
+    Instance.new("UICorner", IntroLine).CornerRadius = UDim.new(1, 0)
 
-    TweenService:Create(IntroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 0.2}):Play()
-    TweenService:Create(IntroText, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {TextTransparency = 0, Position = UDim2.new(0.5, 0, 0.5, -6)}):Play()
-    TweenService:Create(IntroLine, TweenInfo.new(0.6, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 0, Size = UDim2.new(0, 260, 0, 2), Position = UDim2.new(0.5, 0, 0.5, 17)}):Play()
-    TweenService:Create(Blur, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = 14}):Play()
-    task.wait(0.5)
+    -- Sequence 1: Fading and bluring smooth start
+    TweenService:Create(IntroFrame, TweenInfo.new(0.6, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 0.15}):Play()
+    TweenService:Create(Blur, TweenInfo.new(0.6, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = 16}):Play()
+    task.wait(0.2)
 
-    local correndoBrilho = true
-    task.wait(1.5)
-    correndoBrilho = false
+    -- Sequence 2: Popping Text Intro
+    TweenService:Create(IntroText, TweenInfo.new(0.7, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}):Play()
+    TweenService:Create(TextScale, TweenInfo.new(0.9, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {Scale = 1}):Play()
+    task.wait(0.3)
 
-    TweenService:Create(IntroText, TweenInfo.new(0.35, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {TextTransparency = 1, Position = UDim2.new(0.5, 0, 0.5, -16)}):Play()
-    TweenService:Create(IntroLine, TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 2)}):Play()
-    TweenService:Create(IntroFrame, TweenInfo.new(0.35, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(Blur, TweenInfo.new(0.35, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = 0}):Play()
-    task.wait(0.35)
+    -- Sequence 3: Expanding Line dynamically
+    TweenService:Create(IntroLine, TweenInfo.new(0.6, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundTransparency = 0, Size = UDim2.new(0, 280, 0, 2)}):Play()
+    task.wait(1.4) 
 
-    IntroFrame:Destroy()
-    Blur:Destroy()
+    -- Sequence 4: Fade Out smoothly
+    TweenService:Create(IntroText, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {TextTransparency = 1, Position = UDim2.new(0, 0, 0, 10)}):Play()
+    TweenService:Create(IntroLine, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 2)}):Play()
+    TweenService:Create(TextScale, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {Scale = 0.9}):Play()
+    task.wait(0.3)
+    
+    TweenService:Create(IntroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(Blur, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = 0}):Play()
+    task.wait(0.2)
 
     RegistrarTransparencias(mainFrame)
     for _, item in ipairs(mainFrame:GetDescendants()) do RegistrarTransparencias(item) end
@@ -1005,17 +1032,28 @@ local function ExecutarIntroAkat()
     mainWrapper.Visible = true
     FloatBtn.Visible = true
 
+    local MainScale = Instance.new("UIScale", mainWrapper)
+    MainScale.Scale = 0.85
+
     AplicarFadeSincronizado(mainWrapper, true, 0)
     mainWrapper.Size = UDim2.new(0, 520, 0, 300)
 
-    local fastOpen = TweenInfo.new(0.14, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
-    AplicarFadeSincronizado(mainWrapper, false, 0.14)
-    local openTween = TweenService:Create(mainWrapper, fastOpen, {Size = UDim2.new(0, 520, 0, 300)})
+    -- Sequence 5: Opening Menu with Elite Bounce effect
+    AplicarFadeSincronizado(mainWrapper, false, 0.35)
+    local openScale = TweenService:Create(MainScale, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1})
+    local openTween = TweenService:Create(mainWrapper, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 520, 0, 300)})
+    
+    openScale:Play()
     openTween:Play()
-    openTween.Completed:Connect(function() selectTab("Player") end)
+    
+    openTween.Completed:Connect(function() 
+        selectTab("Player") 
+        MainScale:Destroy() 
+        IntroFrame:Destroy()
+        Blur:Destroy()
+    end)
 end
 
--- [EFEITO HOVER ATUALIZADO PARA RESPEITAR O PRETO BORRADO]
 local function AplicarEfeitoFisicoBotao(btn, hoverColor)
     btn.MouseEnter:Connect(function()
         TweenService:Create(btn, TweenInfo.new(0.15, Enum.EasingStyle.Cubic), {BackgroundColor3 = Color3.fromRGB(36, 36, 36), BackgroundTransparency = 0.3}):Play()
@@ -1064,7 +1102,6 @@ createToggle(togglesContainer, "SafeSpot",    "Teleports")
 createToggle(togglesContainer, "AutoCollect", "Misc")
 createToggle(togglesContainer, "ChatRoles",   "Misc")
 
--- ANIMAÇÃO DE PESQUISA PREMIUM (MUDADA PARA QUINTIC ULTRA-FLUIDA)
 SearchBtn.MouseButton1Click:Connect(function()
     if isMinimized then return end
     searchOpen = not searchOpen
