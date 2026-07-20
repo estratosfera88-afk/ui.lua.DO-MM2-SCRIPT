@@ -2,6 +2,7 @@
 --     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.6] - ULTRA OPTIMIZED
 --     FIXED: CanvasGroup corner clipping, synchronized search bar frame slide, seamless premium animations
 --     UPDATED: Symmetrical option backgrounds, blurred black top buttons, softened float animation, fixed multi-touch & sidebar clipping
+--     REMOVED: Double borders on sidebar and profile frame for cleaner aesthetics
 -- ]]
 
 local Players = game:GetService("Players")
@@ -164,7 +165,6 @@ mainFrame.BorderSizePixel = 0
 mainFrame.ZIndex = 5
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 9)
 
--- FIX: Modificado o stroke para devorar pixels residuais do canvasgroup, corrigindo a pontinha afiada
 local frameStroke = Instance.new("UIStroke", mainFrame)
 frameStroke.Color = Color3.fromHex("#161616")
 frameStroke.Thickness = 1.2
@@ -195,7 +195,7 @@ subtitle.Name = "Subtitle"
 subtitle.Size = UDim2.new(0, 200, 0, 14)
 subtitle.Position = UDim2.new(0, 16, 0, 28)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = "MM2 SCRIPT [BETA v3.5]"
+subtitle.Text = "MM2 SCRIPT [BETA v3.6]"
 subtitle.TextColor3 = Color3.fromHex("#8B0000")
 subtitle.TextSize = 10
 subtitle.Font = Enum.Font.Gotham
@@ -332,7 +332,7 @@ CloseLine2.BackgroundColor3 = Color3.fromHex("#A0A0A0")
 CloseLine2.BorderSizePixel = 0
 CloseLine2.ZIndex = 8
 
--- [LINHA DIVISÓRIA]
+-- [LINHA DIVISÓRIA UPPER]
 local div = Instance.new("Frame", mainFrame)
 div.Name = "Div"
 div.Size = UDim2.new(1, 0, 0, 1)
@@ -350,7 +350,6 @@ SidebarFrame.BackgroundTransparency = 1
 SidebarFrame.BorderSizePixel = 0
 SidebarFrame.ZIndex = 6
 
--- FIX: Fundo da Sidebar dividido em dois frames visuais perfeitos para arredondar apenas a ponta inferior esquerda e manter a direita reta sem transparência vazando.
 local SidebarBgContainer = Instance.new("Frame", SidebarFrame)
 SidebarBgContainer.Name = "SidebarBgContainer"
 SidebarBgContainer.Size = UDim2.new(1, 0, 1, 0)
@@ -379,17 +378,12 @@ SidebarSeparator.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 SidebarSeparator.BorderSizePixel = 0
 SidebarSeparator.ZIndex = 6
 
-local ProfileDiv = Instance.new("Frame", SidebarFrame)
-ProfileDiv.Size = UDim2.new(1, 0, 0, 1)
-ProfileDiv.Position = UDim2.new(0, 0, 1, -66)
-ProfileDiv.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-ProfileDiv.BorderSizePixel = 0
-ProfileDiv.ZIndex = 6
+-- [FIX: REMOVIDO BORDAS FEIAS DO FUNDO DAS ABAS]
 
 -- [TABS CONTAINER]
 local TabsContainer = Instance.new("ScrollingFrame", SidebarFrame)
 TabsContainer.Name = "TabsContainer"
-TabsContainer.Size = UDim2.new(1, 0, 1, -75)
+TabsContainer.Size = UDim2.new(1, 0, 1, -66) -- Ajustado dinamicamente para ocupar o espaço sem sobreposição
 TabsContainer.Position = UDim2.new(0, 0, 0, 0)
 TabsContainer.BackgroundTransparency = 1
 TabsContainer.BorderSizePixel = 0
@@ -406,6 +400,7 @@ TabsLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TabsLayout.Padding = UDim.new(0, 0)
 TabsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
+-- [USER PROFILE CONTAINER]
 local UserProfileFrame = Instance.new("Frame", SidebarFrame)
 UserProfileFrame.Name = "UserProfileFrame"
 UserProfileFrame.Size = UDim2.new(1, -16, 0, 50)
@@ -415,9 +410,8 @@ UserProfileFrame.BackgroundTransparency = 0.2
 UserProfileFrame.BorderSizePixel = 0
 UserProfileFrame.ZIndex = 7
 Instance.new("UICorner", UserProfileFrame).CornerRadius = UDim.new(0, 6)
-local ProfileBorder = Instance.new("UIStroke", UserProfileFrame)
-ProfileBorder.Color = Color3.fromRGB(24, 24, 24)
-ProfileBorder.Thickness = 1
+
+-- [FIX: REMOVIDO PROFILEBORDER DAQUI PARA ELIMINAR A SEGUNDA BORDA]
 
 local AvatarImage = Instance.new("ImageLabel", UserProfileFrame)
 AvatarImage.Name = "AvatarImage"
@@ -580,7 +574,6 @@ end
 local function CriarIconeProcedural(parent, tabName)
     local iconContainer = Instance.new("Frame", parent)
     iconContainer.Name = "Icon"
-    -- FIX: Aumentado tamanho dos ícones conforme solicitado
     iconContainer.Size = UDim2.new(0, 20, 0, 20) 
     iconContainer.Position = UDim2.new(0, 12, 0.5, -10)
     iconContainer.BackgroundTransparency = 1
@@ -705,7 +698,6 @@ local function createTabBtn(tabName)
     CriarIconeProcedural(tabBtn, tabName)
     local tabLabel = Instance.new("TextLabel", tabBtn)
     tabLabel.Name = "Label"
-    -- FIX: Ajuste do label distanciando do ícone que agora é maior
     tabLabel.Size = UDim2.new(1, -50, 1, 0) 
     tabLabel.Position = UDim2.new(0, 42, 0, 0) 
     tabLabel.BackgroundTransparency = 1
@@ -960,7 +952,7 @@ local function alternarVisibilidadeMenu()
     end
 end
 
--- FIX: Melhorias absolutas da Intro! Utilizando sistema Elastic de escalas (60FPS+)
+-- [NOME ANIMAÇÃO: CINEMATIC TEXT MASK REVEAL]
 local function ExecutarIntroAkat()
     local Blur = Instance.new("BlurEffect")
     Blur.Size = 0
@@ -972,59 +964,56 @@ local function ExecutarIntroAkat()
     IntroFrame.BackgroundTransparency = 1
     IntroFrame.ZIndex = 500
 
-    local CenterContainer = Instance.new("Frame", IntroFrame)
-    CenterContainer.AnchorPoint = Vector2.new(0.5, 0.5)
-    CenterContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
-    CenterContainer.Size = UDim2.new(0, 300, 0, 100)
-    CenterContainer.BackgroundTransparency = 1
-    
-    local TextScale = Instance.new("UIScale", CenterContainer)
-    TextScale.Scale = 0.85
+    -- Container invisível para clipping (efeito revelar de baixo pra cima)
+    local MaskContainer = Instance.new("Frame", IntroFrame)
+    MaskContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+    MaskContainer.Position = UDim2.new(0.5, 0, 0.5, -10)
+    MaskContainer.Size = UDim2.new(0, 420, 0, 40)
+    MaskContainer.BackgroundTransparency = 1
+    MaskContainer.ClipsDescendants = true
+    MaskContainer.ZIndex = 501
 
-    local IntroText = Instance.new("TextLabel", CenterContainer)
-    IntroText.Size = UDim2.new(1, 0, 1, -20)
-    IntroText.Position = UDim2.new(0, 0, 0, -10)
+    local IntroText = Instance.new("TextLabel", MaskContainer)
+    IntroText.Size = UDim2.new(1, 0, 1, 0)
+    IntroText.Position = UDim2.new(0, 0, 1, 0) -- Começa escondido abaixo do corte da caixa
     IntroText.BackgroundTransparency = 1
     IntroText.Font = Enum.Font.GothamBold
-    IntroText.TextSize = 28
+    IntroText.TextSize = 26
     IntroText.RichText = true
     IntroText.Text = UI_TEXT.Intro
-    IntroText.TextTransparency = 1
-    IntroText.ZIndex = 501
+    IntroText.ZIndex = 502
 
-    local IntroLine = Instance.new("Frame", CenterContainer)
+    local IntroLine = Instance.new("Frame", IntroFrame)
     IntroLine.AnchorPoint = Vector2.new(0.5, 0.5)
-    IntroLine.Position = UDim2.new(0.5, 0, 1, -15)
+    IntroLine.Position = UDim2.new(0.5, 0, 0.5, 22)
     IntroLine.Size = UDim2.new(0, 0, 0, 2)
     IntroLine.BackgroundColor3 = Color3.fromHex("#8B0000")
     IntroLine.BorderSizePixel = 0
     IntroLine.BackgroundTransparency = 1
-    IntroLine.ZIndex = 502
+    IntroLine.ZIndex = 503
     Instance.new("UICorner", IntroLine).CornerRadius = UDim.new(1, 0)
 
-    -- Sequence 1: Fading and bluring smooth start
-    TweenService:Create(IntroFrame, TweenInfo.new(0.6, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 0.15}):Play()
-    TweenService:Create(Blur, TweenInfo.new(0.6, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = 16}):Play()
+    -- Fase 1: Fade-in do background embaçado
+    TweenService:Create(IntroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0.15}):Play()
+    TweenService:Create(Blur, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 14}):Play()
+    task.wait(0.1)
+
+    -- Fase 2: O texto desliza elegantemente para cima (Reveal)
+    TweenService:Create(IntroText, TweenInfo.new(0.85, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
     task.wait(0.2)
 
-    -- Sequence 2: Popping Text Intro
-    TweenService:Create(IntroText, TweenInfo.new(0.7, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}):Play()
-    TweenService:Create(TextScale, TweenInfo.new(0.9, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {Scale = 1}):Play()
-    task.wait(0.3)
+    -- Fase 3: Linha de acento se expande suavemente pelas laterais
+    TweenService:Create(IntroLine, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0, Size = UDim2.new(0, 260, 0, 2)}):Play()
+    task.wait(1.6) 
 
-    -- Sequence 3: Expanding Line dynamically
-    TweenService:Create(IntroLine, TweenInfo.new(0.6, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundTransparency = 0, Size = UDim2.new(0, 280, 0, 2)}):Play()
-    task.wait(1.4) 
-
-    -- Sequence 4: Fade Out smoothly
-    TweenService:Create(IntroText, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {TextTransparency = 1, Position = UDim2.new(0, 0, 0, 10)}):Play()
-    TweenService:Create(IntroLine, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {BackgroundTransparency = 1, Size = UDim2.new(0, 0, 0, 2)}):Play()
-    TweenService:Create(TextScale, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {Scale = 0.9}):Play()
+    -- Fase 4: Desfazendo com Fade-out suave
+    TweenService:Create(IntroText, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
+    TweenService:Create(IntroLine, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 2), BackgroundTransparency = 1}):Play()
     task.wait(0.3)
     
-    TweenService:Create(IntroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(Blur, TweenInfo.new(0.5, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = 0}):Play()
-    task.wait(0.2)
+    TweenService:Create(IntroFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(Blur, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 0}):Play()
+    task.wait(0.3)
 
     RegistrarTransparencias(mainFrame)
     for _, item in ipairs(mainFrame:GetDescendants()) do RegistrarTransparencias(item) end
@@ -1038,10 +1027,10 @@ local function ExecutarIntroAkat()
     AplicarFadeSincronizado(mainWrapper, true, 0)
     mainWrapper.Size = UDim2.new(0, 520, 0, 300)
 
-    -- Sequence 5: Opening Menu with Elite Bounce effect
+    -- Fase 5: Menu principal abre com um efeito Bounce controlado
     AplicarFadeSincronizado(mainWrapper, false, 0.35)
-    local openScale = TweenService:Create(MainScale, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1})
-    local openTween = TweenService:Create(mainWrapper, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 520, 0, 300)})
+    local openScale = TweenService:Create(MainScale, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1})
+    local openTween = TweenService:Create(mainWrapper, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 520, 0, 300)})
     
     openScale:Play()
     openTween:Play()
