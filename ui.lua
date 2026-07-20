@@ -3,6 +3,7 @@
 --     FIXED: CanvasGroup corner clipping, synchronized search bar frame slide, seamless premium animations
 --     UPDATED: Symmetrical option backgrounds, blurred black top buttons, softened float animation, fixed multi-touch & sidebar clipping
 --     REMOVED: Double borders on sidebar and profile frame for cleaner aesthetics
+--     FIXED VISUAL: Unified sidebar background to prevent pixel gaps and double-corner glitches.
 -- ]]
 
 local Players = game:GetService("Players")
@@ -350,26 +351,14 @@ SidebarFrame.BackgroundTransparency = 1
 SidebarFrame.BorderSizePixel = 0
 SidebarFrame.ZIndex = 6
 
+-- [FIX: FUNDO UNIFICADO SEM ENCRUZILHADAS DE PIXEL OU DUPLO CORNER RADIUS]
 local SidebarBgContainer = Instance.new("Frame", SidebarFrame)
 SidebarBgContainer.Name = "SidebarBgContainer"
 SidebarBgContainer.Size = UDim2.new(1, 0, 1, 0)
-SidebarBgContainer.BackgroundTransparency = 1
+SidebarBgContainer.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+SidebarBgContainer.BackgroundTransparency = 0.35
+SidebarBgContainer.BorderSizePixel = 0
 SidebarBgContainer.ZIndex = 6
-
-local SidebarBgRoundedLeft = Instance.new("Frame", SidebarBgContainer)
-SidebarBgRoundedLeft.Size = UDim2.new(1,-9,1,0)
-SidebarBgRoundedLeft.Position = UDim2.new(0, 0, 0, 0)
-SidebarBgRoundedLeft.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-SidebarBgRoundedLeft.BackgroundTransparency = 0.35
-SidebarBgRoundedLeft.BorderSizePixel = 0
-Instance.new("UICorner", SidebarBgRoundedLeft).CornerRadius = UDim.new(0, 9)
-
-local SidebarBgSquareRight = Instance.new("Frame", SidebarBgContainer)
-SidebarBgSquareRight.Size = UDim2.new(0, 10, 1, 0)
-SidebarBgSquareRight.Position = UDim2.new(1,-10,0,0)
-SidebarBgSquareRight.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-SidebarBgSquareRight.BackgroundTransparency = 0.35
-SidebarBgSquareRight.BorderSizePixel = 0
 
 local SidebarSeparator = Instance.new("Frame", SidebarFrame)
 SidebarSeparator.Size = UDim2.new(0, 1, 1, 0)
@@ -378,12 +367,10 @@ SidebarSeparator.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 SidebarSeparator.BorderSizePixel = 0
 SidebarSeparator.ZIndex = 6
 
--- [FIX: REMOVIDO BORDAS FEIAS DO FUNDO DAS ABAS]
-
 -- [TABS CONTAINER]
 local TabsContainer = Instance.new("ScrollingFrame", SidebarFrame)
 TabsContainer.Name = "TabsContainer"
-TabsContainer.Size = UDim2.new(1, 0, 1, -66) -- Ajustado dinamicamente para ocupar o espaço sem sobreposição
+TabsContainer.Size = UDim2.new(1, 0, 1, -66)
 TabsContainer.Position = UDim2.new(0, 0, 0, 0)
 TabsContainer.BackgroundTransparency = 1
 TabsContainer.BorderSizePixel = 0
@@ -410,8 +397,6 @@ UserProfileFrame.BackgroundTransparency = 0.2
 UserProfileFrame.BorderSizePixel = 0
 UserProfileFrame.ZIndex = 7
 Instance.new("UICorner", UserProfileFrame).CornerRadius = UDim.new(0, 6)
-
--- [FIX: REMOVIDO PROFILEBORDER DAQUI PARA ELIMINAR A SEGUNDA BORDA]
 
 local AvatarImage = Instance.new("ImageLabel", UserProfileFrame)
 AvatarImage.Name = "AvatarImage"
@@ -1176,10 +1161,8 @@ end)
 ConfigurarArrastarAkat(mainWrapper)
 ConfigurarArrastarAkat(FloatBtn)
 
-task.spawn(function()
-    task.wait(0.1)
-    RegistrarTransparencias(confirmFrame)
-    for _, d in ipairs(confirmFrame:GetDescendants()) do RegistrarTransparencias(d) end
-end)
+task.wait(0.1)
+RegistrarTransparencias(confirmFrame)
+for _, d in ipairs(confirmFrame:GetDescendants()) do RegistrarTransparencias(d) end
 
 task.spawn(ExecutarIntroAkat)
