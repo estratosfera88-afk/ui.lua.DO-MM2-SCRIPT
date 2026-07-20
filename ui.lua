@@ -357,7 +357,7 @@ SidebarBgContainer.BackgroundTransparency = 1
 SidebarBgContainer.ZIndex = 6
 
 local SidebarBgRoundedLeft = Instance.new("Frame", SidebarBgContainer)
-SidebarBgRoundedLeft.Size = UDim2.new(1, -10, 1, 0)
+SidebarBgRoundedLeft.Size = UDim2.new(1,-9,1,0)
 SidebarBgRoundedLeft.Position = UDim2.new(0, 0, 0, 0)
 SidebarBgRoundedLeft.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
 SidebarBgRoundedLeft.BackgroundTransparency = 0.35
@@ -366,7 +366,7 @@ Instance.new("UICorner", SidebarBgRoundedLeft).CornerRadius = UDim.new(0, 9)
 
 local SidebarBgSquareRight = Instance.new("Frame", SidebarBgContainer)
 SidebarBgSquareRight.Size = UDim2.new(0, 10, 1, 0)
-SidebarBgSquareRight.Position = UDim2.new(1, -10, 0, 0)
+SidebarBgSquareRight.Position = UDim2.new(1,-10,0,0)
 SidebarBgSquareRight.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
 SidebarBgSquareRight.BackgroundTransparency = 0.35
 SidebarBgSquareRight.BorderSizePixel = 0
