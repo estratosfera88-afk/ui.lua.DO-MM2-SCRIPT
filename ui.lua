@@ -352,6 +352,8 @@ SidebarFrame.BorderSizePixel = 0
 SidebarFrame.ZIndex = 6
 
 -- [FIX: FUNDO UNIFICADO SEM ENCRUZILHADAS DE PIXEL OU DUPLO CORNER RADIUS]
+SidebarFrame.ClipsDescendants = true
+
 local SidebarBgContainer = Instance.new("Frame", SidebarFrame)
 SidebarBgContainer.Name = "SidebarBgContainer"
 SidebarBgContainer.Size = UDim2.new(1, 0, 1, 0)
@@ -359,6 +361,10 @@ SidebarBgContainer.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
 SidebarBgContainer.BackgroundTransparency = 0.35
 SidebarBgContainer.BorderSizePixel = 0
 SidebarBgContainer.ZIndex = 6
+
+local SidebarCorner = Instance.new("UICorner")
+SidebarCorner.CornerRadius = UDim.new(0, 9)
+SidebarCorner.Parent = SidebarBgContainer
 
 local SidebarSeparator = Instance.new("Frame", SidebarFrame)
 SidebarSeparator.Size = UDim2.new(0, 1, 1, 0)
