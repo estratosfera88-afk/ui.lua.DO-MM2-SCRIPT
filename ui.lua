@@ -578,15 +578,15 @@ local function CriarIconeProcedural(parent, tabName)
     imageLabel.ImageColor3 = Color3.fromRGB(180, 180, 180)
     
     if tabName == "Player" then
-        imageLabel.Image = "rbxthumb://type=Asset&id=90990715951376&w=150&h=150"
+        imageLabel.Image = "rbxthumb://type=Asset&id=78324938264014&w=150&h=150"
     elseif tabName == "Teleports" then
-        imageLabel.Image = "rbxthumb://type=Asset&id=131357413318360&w=150&h=150"
+        imageLabel.Image = "rbxthumb://type=Asset&id=122367250674432&w=150&h=150"
     elseif tabName == "Misc" then
-        imageLabel.Image = "rbxthumb://type=Asset&id=96954032676031&w=150&h=150"
+        imageLabel.Image = "rbxthumb://type=Asset&id=79429182159899&w=150&h=150"
     elseif tabName == "Visuals" then
-        imageLabel.Image = "rbxthumb://type=Asset&id=134099134229815&w=150&h=150"
+        imageLabel.Image = "rbxthumb://type=Asset&id=135604583195835&w=150&h=150"
     elseif tabName == "Combat" then
-        imageLabel.Image = "rbxthumb://type=Asset&id=131607049070859&w=150&h=150"
+        imageLabel.Image = "rbxthumb://type=Asset&id=139442231247295&w=150&h=150"
     end
 end
 
