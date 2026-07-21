@@ -1,6 +1,6 @@
 -- [[
---     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.6] - ULTRA OPTIMIZED & FIXED
---     FIXED: Divider line positioning (no longer crosses sidebar/player tab), active tab background retention on restore/unminimize.
+--     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.7] - ULTRA OPTIMIZED & FIXED
+--     UPDATED: Dark black background + intense blur on intro, custom AKAT-styled Rayfield notification system with auto-copy Discord link.
 -- ]]
 
 local Players = game:GetService("Players")
@@ -68,6 +68,100 @@ if uiParent:FindFirstChild("DeltaAkatUniversalUI") then
     pcall(function() uiParent.DeltaAkatUniversalUI:Destroy() end)
 end
 screenGui.Parent = uiParent
+
+-- [SISTEMA DE CLIPBOARD E NOTIFICAÇÃO ESTILO RAYFIELD / AKAT]
+local function CopiarLinkDiscord()
+    local link = "https://discord.gg/tfQYbRXT9Q"
+    if setclipboard then
+        pcall(setclipboard, link)
+    elseif toclipboard then
+        pcall(toclipboard, link)
+    elseif syn and syn.write_clipboard then
+        pcall(syn.write_clipboard, link)
+    end
+end
+
+local notifContainer = Instance.new("Frame", screenGui)
+notifContainer.Name = "NotifContainer"
+notifContainer.AnchorPoint = Vector2.new(1, 1)
+notifContainer.Position = UDim2.new(1, -20, 1, -20)
+notifContainer.Size = UDim2.new(0, 260, 1, -40)
+notifContainer.BackgroundTransparency = 1
+notifContainer.ZIndex = 100
+
+local notifLayout = Instance.new("UIListLayout", notifContainer)
+notifLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+notifLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+notifLayout.SortOrder = Enum.SortOrder.LayoutOrder
+notifLayout.Padding = UDim.new(0, 8)
+
+local function CriarNotificacao(titulo, mensagem, tempo)
+    tempo = tempo or 4
+
+    local notif = Instance.new("Frame", notifContainer)
+    notif.Name = "Notification"
+    notif.Size = UDim2.new(1, 0, 0, 52)
+    notif.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    notif.BackgroundTransparency = 0.15
+    notif.BorderSizePixel = 0
+    notif.ZIndex = 101
+    notif.ClipsDescendants = true
+
+    Instance.new("UICorner", notif).CornerRadius = UDim.new(0, 8)
+
+    local stroke = Instance.new("UIStroke", notif)
+    stroke.Color = Color3.fromHex("#1A1A1A")
+    stroke.Thickness = 1.2
+
+    local accentBar = Instance.new("Frame", notif)
+    accentBar.Size = UDim2.new(0, 3, 0, 30)
+    accentBar.Position = UDim2.new(0, 10, 0.5, -15)
+    accentBar.BackgroundColor3 = Color3.fromHex("#8B0000")
+    accentBar.BorderSizePixel = 0
+    accentBar.ZIndex = 102
+    Instance.new("UICorner", accentBar).CornerRadius = UDim.new(1, 0)
+
+    local titleLbl = Instance.new("TextLabel", notif)
+    titleLbl.Size = UDim2.new(1, -30, 0, 16)
+    titleLbl.Position = UDim2.new(0, 22, 0, 9)
+    titleLbl.BackgroundTransparency = 1
+    titleLbl.Text = titulo
+    titleLbl.TextColor3 = Color3.fromHex("#8B0000")
+    titleLbl.Font = Enum.Font.GothamBold
+    titleLbl.TextSize = 11
+    titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+    titleLbl.ZIndex = 102
+
+    local msgLbl = Instance.new("TextLabel", notif)
+    msgLbl.Size = UDim2.new(1, -30, 0, 16)
+    msgLbl.Position = UDim2.new(0, 22, 0, 27)
+    msgLbl.BackgroundTransparency = 1
+    msgLbl.Text = mensagem
+    msgLbl.TextColor3 = Color3.fromRGB(220, 220, 220)
+    msgLbl.Font = Enum.Font.Gotham
+    msgLbl.TextSize = 10
+    msgLbl.TextXAlignment = Enum.TextXAlignment.Left
+    msgLbl.ZIndex = 102
+
+    -- Animação de entrada (Slide Rayfield Style)
+    notif.Position = UDim2.new(1, 300, 0, 0)
+    local tweenIn = TweenService:Create(notif, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0, 0, 0, 0)
+    })
+    tweenIn:Play()
+
+    task.delay(tempo, function()
+        if notif and notif.Parent then
+            local tweenOut = TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+                Position = UDim2.new(1, 300, 0, 0)
+            })
+            tweenOut:Play()
+            tweenOut.Completed:Connect(function()
+                notif:Destroy()
+            end)
+        end
+    end)
+end
 
 local function ConfigurarArrastarAkat(inst, trigger)
     trigger = trigger or inst
@@ -331,7 +425,7 @@ CloseLine2.BackgroundColor3 = Color3.fromHex("#A0A0A0")
 CloseLine2.BorderSizePixel = 0
 CloseLine2.ZIndex = 8
 
--- [FIX: LINHA DIVISÓRIA POSICIONADA APENAS NO PAINEL DIREITO PARA NÃO ATRAVESSAR AS ABAS]
+-- [LINHA DIVISÓRIA ALINHADA]
 local div = Instance.new("Frame", mainFrame)
 div.Name = "Div"
 div.Size = UDim2.new(1, -152, 0, 1)
@@ -438,7 +532,7 @@ UsernameLabel.TextXAlignment = Enum.TextXAlignment.Left
 UsernameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 UsernameLabel.ZIndex = 8
 
--- [TOGGLES CONTAINER & FIXED SCROLLBAR]
+-- [TOGGLES CONTAINER]
 local togglesContainer = Instance.new("ScrollingFrame", mainFrame)
 togglesContainer.Name = "TogglesContainer"
 togglesContainer.Size = UDim2.new(1, -152, 1, -62)
@@ -647,7 +741,6 @@ local function filterToggles(currentActiveTab, query)
     end
 end
 
--- FIX: ATUALIZAÇÃO DO SELETORES DE ABAS PARA RETER A TRANSPARÊNCIA ORIGINAL AO REABRIR/UNMINIMIZE
 local function selectTab(tabName)
     activeTab = tabName
     local animSpeed = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -960,7 +1053,7 @@ local function alternarVisibilidadeMenu()
     end
 end
 
--- [INTRO ANIMATION]
+-- [INTRO ANIMATION COM PRETO DARK + BLUR INTENSO]
 local function ExecutarIntroAkat()
     local Blur = Instance.new("BlurEffect")
     Blur.Size = 0
@@ -968,7 +1061,7 @@ local function ExecutarIntroAkat()
 
     local IntroFrame = Instance.new("Frame", screenGui)
     IntroFrame.Size = UDim2.new(1, 0, 1, 0)
-    IntroFrame.BackgroundColor3 = Color3.fromHex("#050505")
+    IntroFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     IntroFrame.BackgroundTransparency = 1
     IntroFrame.ZIndex = 500
 
@@ -1000,8 +1093,9 @@ local function ExecutarIntroAkat()
     IntroLine.ZIndex = 503
     Instance.new("UICorner", IntroLine).CornerRadius = UDim.new(1, 0)
 
-    TweenService:Create(IntroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0.15}):Play()
-    TweenService:Create(Blur, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 14}):Play()
+    -- Fundo preto escuro e blur profundo
+    TweenService:Create(IntroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0.05}):Play()
+    TweenService:Create(Blur, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 24}):Play()
     task.wait(0.1)
 
     TweenService:Create(IntroText, TweenInfo.new(0.85, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
@@ -1042,6 +1136,10 @@ local function ExecutarIntroAkat()
         MainScale:Destroy() 
         IntroFrame:Destroy()
         Blur:Destroy()
+
+        -- Copia o link e exibe a notificação no estilo AKAT / Rayfield
+        CopiarLinkDiscord()
+        CriarNotificacao("AKAT COMMUNITY", "Link Discord Copied", 4)
     end)
 end
 
