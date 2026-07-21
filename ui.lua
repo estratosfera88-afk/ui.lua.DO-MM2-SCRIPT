@@ -69,7 +69,69 @@ if uiParent:FindFirstChild("DeltaAkatUniversalUI") then
 end
 screenGui.Parent = uiParent
 
--- [SISTEMA DE CLIPBOARD E NOTIFICAÇÃO ESTILO RAYFIELD / AKAT]
+-- [SISTEMA DE GERENCIAMENTO DE TRANSPARÊNCIA SINCRONIZADA]
+local function RegistrarTransparencias(objeto)
+    if originalTrans[objeto] then return end
+    if objeto:IsA("Frame") or objeto:IsA("ScrollingFrame") or objeto:IsA("CanvasGroup") then
+        originalTrans[objeto] = { BackgroundTransparency = objeto.BackgroundTransparency }
+    elseif objeto:IsA("TextLabel") or objeto:IsA("TextButton") or objeto:IsA("TextBox") then
+        originalTrans[objeto] = {
+            TextTransparency = objeto.TextTransparency,
+            BackgroundTransparency = objeto.BackgroundTransparency,
+            TextStrokeTransparency = objeto.TextStrokeTransparency or 1
+        }
+    elseif objeto:IsA("ImageLabel") or objeto:IsA("ImageButton") then
+        originalTrans[objeto] = {
+            ImageTransparency = objeto.ImageTransparency,
+            BackgroundTransparency = objeto.BackgroundTransparency
+        }
+    elseif objeto:IsA("UIStroke") then
+        originalTrans[objeto] = { Transparency = objeto.Transparency }
+    end
+end
+
+local function AplicarFadeSincronizado(raiz, fadeOut, duracao)
+    local info = TweenInfo.new(duracao, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
+    local function tratarObjeto(obj)
+        RegistrarTransparencias(obj)
+        local orig = originalTrans[obj]
+        if not orig then return end
+        if orig.BackgroundTransparency then
+            local t = fadeOut and 1 or orig.BackgroundTransparency
+            if obj.BackgroundTransparency ~= t then
+                if duracao == 0 then obj.BackgroundTransparency = t else TweenService:Create(obj, info, {BackgroundTransparency = t}):Play() end
+            end
+        end
+        if orig.TextTransparency then
+            local t = fadeOut and 1 or orig.TextTransparency
+            if obj.TextTransparency ~= t then
+                if duracao == 0 then obj.TextTransparency = t else TweenService:Create(obj, info, {TextTransparency = t}):Play() end
+            end
+        end
+        if orig.TextStrokeTransparency then
+            local t = fadeOut and 1 or orig.TextStrokeTransparency
+            if obj.TextStrokeTransparency ~= t then
+                if duracao == 0 then obj.TextStrokeTransparency = t else TweenService:Create(obj, info, {TextStrokeTransparency = t}):Play() end
+            end
+        end
+        if orig.ImageTransparency then
+            local t = fadeOut and 1 or (obj.Name == "Shadow3D" and 0.5 or orig.ImageTransparency)
+            if obj.ImageTransparency ~= t then
+                if duracao == 0 then obj.ImageTransparency = t else TweenService:Create(obj, info, {ImageTransparency = t}):Play() end
+            end
+        end
+        if orig.Transparency then
+            local t = fadeOut and 1 or orig.Transparency
+            if obj.Transparency ~= t then
+                if duracao == 0 then obj.Transparency = t else TweenService:Create(obj, info, {Transparency = t}):Play() end
+            end
+        end
+    end
+    tratarObjeto(raiz)
+    for _, desc in ipairs(raiz:GetDescendants()) do tratarObjeto(desc) end
+end
+
+-- [SISTEMA DE CLIPBOARD E NOTIFICAÇÃO ESTILO RAYFIELD / AKAT - FIX SINCRONIZADO]
 local function CopiarLinkDiscord()
     local link = "https://discord.gg/tfQYbRXT9Q"
     if setclipboard then
@@ -98,26 +160,27 @@ notifLayout.Padding = UDim.new(0, 8)
 local function CriarNotificacao(titulo, mensagem, tempo)
     tempo = tempo or 4
 
-    local notif = Instance.new("CanvasGroup", notifContainer)
+    local notif = Instance.new("Frame", notifContainer)
     notif.Name = "Notification"
     notif.Size = UDim2.new(1, 0, 0, 52)
     notif.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
     notif.BackgroundTransparency = 0.15
     notif.BorderSizePixel = 0
     notif.ZIndex = 101
-    notif.GroupTransparency = 1 -- Inicia totalmente invisível
 
     Instance.new("UICorner", notif).CornerRadius = UDim.new(0, 8)
 
     local stroke = Instance.new("UIStroke", notif)
     stroke.Color = Color3.fromHex("#1A1A1A")
     stroke.Thickness = 1.2
+    stroke.Transparency = 0
 
     local accentBar = Instance.new("Frame", notif)
     accentBar.Size = UDim2.new(0, 3, 0, 30)
     accentBar.Position = UDim2.new(0, 10, 0.5, -15)
     accentBar.BackgroundColor3 = Color3.fromHex("#8B0000")
     accentBar.BorderSizePixel = 0
+    accentBar.BackgroundTransparency = 0
     accentBar.ZIndex = 102
     Instance.new("UICorner", accentBar).CornerRadius = UDim.new(1, 0)
 
@@ -127,6 +190,7 @@ local function CriarNotificacao(titulo, mensagem, tempo)
     titleLbl.BackgroundTransparency = 1
     titleLbl.Text = titulo
     titleLbl.TextColor3 = Color3.fromHex("#8B0000")
+    titleLbl.TextTransparency = 0
     titleLbl.Font = Enum.Font.GothamBold
     titleLbl.TextSize = 11
     titleLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -138,30 +202,26 @@ local function CriarNotificacao(titulo, mensagem, tempo)
     msgLbl.BackgroundTransparency = 1
     msgLbl.Text = mensagem
     msgLbl.TextColor3 = Color3.fromRGB(220, 220, 220)
+    msgLbl.TextTransparency = 0
     msgLbl.Font = Enum.Font.Gotham
     msgLbl.TextSize = 10
     msgLbl.TextXAlignment = Enum.TextXAlignment.Left
     msgLbl.ZIndex = 102
 
-    -- Animação de entrada rápida (Fade-In)
-    RegistrarTransparencias(notif)
-for _, obj in ipairs(notif:GetDescendants()) do
-    RegistrarTransparencias(obj)
-end
+    -- Define o estado inicial como 100% transparente de forma síncrona
+    AplicarFadeSincronizado(notif, true, 0)
 
-AplicarFadeSincronizado(notif, true, 0)
-AplicarFadeSincronizado(notif, false, 0.15)
+    -- Animação de entrada rápida (Fade-In) totalmente sincronizada
+    AplicarFadeSincronizado(notif, false, 0.15)
 
-    -- Animação de saída rápida (Fade-Out)
+    -- Animação de saída rápida (Fade-Out) totalmente sincronizada
     task.delay(tempo, function()
         if notif and notif.Parent then
             AplicarFadeSincronizado(notif, true, 0.15)
-
-            task.delay(0.15, function()
-                   if notif and notif.Parent then
-                         notif:Destroy()
-              end
-           end)
+            task.wait(0.18)
+            if notif and notif.Parent then
+                notif:Destroy()
+            end
         end
     end)
 end
@@ -602,67 +662,6 @@ btnNo.TextSize = 12
 btnNo.Text = UI_TEXT.CancelBtn
 btnNo.ZIndex = 51
 Instance.new("UICorner", btnNo).CornerRadius = UDim.new(0, 6)
-
-local function RegistrarTransparencias(objeto)
-    if originalTrans[objeto] then return end
-    if objeto:IsA("Frame") or objeto:IsA("ScrollingFrame") or objeto:IsA("CanvasGroup") then
-        originalTrans[objeto] = { BackgroundTransparency = objeto.BackgroundTransparency }
-    elseif objeto:IsA("TextLabel") or objeto:IsA("TextButton") or objeto:IsA("TextBox") then
-        originalTrans[objeto] = {
-            TextTransparency = objeto.TextTransparency,
-            BackgroundTransparency = objeto.BackgroundTransparency,
-            TextStrokeTransparency = objeto.TextStrokeTransparency or 1
-        }
-    elseif objeto:IsA("ImageLabel") or objeto:IsA("ImageButton") then
-        originalTrans[objeto] = {
-            ImageTransparency = objeto.ImageTransparency,
-            BackgroundTransparency = objeto.BackgroundTransparency
-        }
-    elseif objeto:IsA("UIStroke") then
-        originalTrans[objeto] = { Transparency = objeto.Transparency }
-    end
-end
-
-local function AplicarFadeSincronizado(raiz, fadeOut, duracao)
-    local info = TweenInfo.new(duracao, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
-    local function tratarObjeto(obj)
-        RegistrarTransparencias(obj)
-        local orig = originalTrans[obj]
-        if not orig then return end
-        if orig.BackgroundTransparency then
-            local t = fadeOut and 1 or orig.BackgroundTransparency
-            if obj.BackgroundTransparency ~= t then
-                if duracao == 0 then obj.BackgroundTransparency = t else TweenService:Create(obj, info, {BackgroundTransparency = t}):Play() end
-            end
-        end
-        if orig.TextTransparency then
-            local t = fadeOut and 1 or orig.TextTransparency
-            if obj.TextTransparency ~= t then
-                if duracao == 0 then obj.TextTransparency = t else TweenService:Create(obj, info, {TextTransparency = t}):Play() end
-            end
-        end
-        if orig.TextStrokeTransparency then
-            local t = fadeOut and 1 or orig.TextStrokeTransparency
-            if obj.TextStrokeTransparency ~= t then
-                if duracao == 0 then obj.TextStrokeTransparency = t else TweenService:Create(obj, info, {TextStrokeTransparency = t}):Play() end
-            end
-        end
-        if orig.ImageTransparency then
-            local t = fadeOut and 1 or (obj.Name == "Shadow3D" and 0.5 or orig.ImageTransparency)
-            if obj.ImageTransparency ~= t then
-                if duracao == 0 then obj.ImageTransparency = t else TweenService:Create(obj, info, {ImageTransparency = t}):Play() end
-            end
-        end
-        if orig.Transparency then
-            local t = fadeOut and 1 or orig.Transparency
-            if obj.Transparency ~= t then
-                if duracao == 0 then obj.Transparency = t else TweenService:Create(obj, info, {Transparency = t}):Play() end
-            end
-        end
-    end
-    tratarObjeto(raiz)
-    for _, desc in ipairs(raiz:GetDescendants()) do tratarObjeto(desc) end
-end
 
 local function CriarIconeProcedural(parent, tabName)
     local iconContainer = Instance.new("Frame", parent)
