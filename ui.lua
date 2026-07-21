@@ -144,24 +144,22 @@ local function CriarNotificacao(titulo, mensagem, tempo)
     msgLbl.ZIndex = 102
 
     -- Animação de entrada rápida (Fade-In)
-    local tweenIn = TweenService:Create(notif, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        GroupTransparency = 0
-    })
-    tweenIn:Play()
+    RegistrarTransparencias(notif)
+for _, obj in ipairs(notif:GetDescendants()) do
+    RegistrarTransparencias(obj)
+end
+
+AplicarFadeSincronizado(notif, true, 0)
+AplicarFadeSincronizado(notif, false, 0.15)
 
     -- Animação de saída rápida (Fade-Out)
-    task.delay(tempo, function()
-        if notif and notif.Parent then
-            local tweenOut = TweenService:Create(notif, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                GroupTransparency = 1
-            })
-            tweenOut:Play()
-            tweenOut.Completed:Connect(function()
-                notif:Destroy()
-            end)
-        end
-    end)
-end
+     AplicarFadeSincronizado(notif, true, 0.15)
+
+task.delay(0.15, function()
+    if notif and notif.Parent then
+        notif:Destroy()
+    end
+end)
 
 local function ConfigurarArrastarAkat(inst, trigger)
     trigger = trigger or inst
