@@ -1,5 +1,5 @@
 -- [[
---     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.7] - ULTRA OPTIMIZED & FIXED
+--     AKAT MM2 SCRIPT - DYNAMIC UI COMPONENT [v3.8] - ULTRA OPTIMIZED & FIXED
 --     UPDATED: Dark black background + intense blur on intro, custom AKAT-styled Rayfield notification system with auto-copy Discord link.
 -- ]]
 
@@ -131,7 +131,7 @@ local function AplicarFadeSincronizado(raiz, fadeOut, duracao)
     for _, desc in ipairs(raiz:GetDescendants()) do tratarObjeto(desc) end
 end
 
--- [SISTEMA DE CLIPBOARD E NOTIFICAÇÃO ESTILO RAYFIELD / AKAT - FIX CANVASGROUP]
+-- [SISTEMA DE CLIPBOARD E NOTIFICAÇÃO ESTILO RAYFIELD / AKAT - SISTEMA ALPHA MATEMÁTICO PERFECT SYNC]
 local function CopiarLinkDiscord()
     local link = "https://discord.gg/tfQYbRXT9Q"
     if setclipboard then
@@ -160,14 +160,14 @@ notifLayout.Padding = UDim.new(0, 8)
 local function CriarNotificacao(titulo, mensagem, tempo)
     tempo = tempo or 4
 
-    local notif = Instance.new("CanvasGroup")
+    local notif = Instance.new("Frame")
     notif.Name = "Notification"
     notif.Size = UDim2.new(1, 0, 0, 52)
     notif.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-    notif.BackgroundTransparency = 0.1
+    notif.BackgroundTransparency = 1 -- Inicia invisível
     notif.BorderSizePixel = 0
     notif.ZIndex = 101
-    notif.GroupTransparency = 1 -- Inicia invisível para o fade-in suave
+    notif.ClipsDescendants = true
     notif.Parent = notifContainer
 
     local corner = Instance.new("UICorner", notif)
@@ -176,12 +176,14 @@ local function CriarNotificacao(titulo, mensagem, tempo)
     local stroke = Instance.new("UIStroke", notif)
     stroke.Color = Color3.fromRGB(35, 35, 35)
     stroke.Thickness = 1.2
+    stroke.Transparency = 1 -- Inicia invisível
 
     local accentBar = Instance.new("Frame", notif)
     accentBar.Size = UDim2.new(0, 3, 0, 30)
     accentBar.Position = UDim2.new(0, 10, 0.5, -15)
     accentBar.BackgroundColor3 = Color3.fromHex("#8B0000")
     accentBar.BorderSizePixel = 0
+    accentBar.BackgroundTransparency = 1 -- Inicia invisível
     accentBar.ZIndex = 102
     Instance.new("UICorner", accentBar).CornerRadius = UDim.new(1, 0)
 
@@ -191,6 +193,7 @@ local function CriarNotificacao(titulo, mensagem, tempo)
     titleLbl.BackgroundTransparency = 1
     titleLbl.Text = titulo
     titleLbl.TextColor3 = Color3.fromHex("#8B0000")
+    titleLbl.TextTransparency = 1 -- Inicia invisível
     titleLbl.Font = Enum.Font.GothamBold
     titleLbl.TextSize = 11
     titleLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -202,26 +205,44 @@ local function CriarNotificacao(titulo, mensagem, tempo)
     msgLbl.BackgroundTransparency = 1
     msgLbl.Text = mensagem
     msgLbl.TextColor3 = Color3.fromRGB(220, 220, 220)
+    msgLbl.TextTransparency = 1 -- Inicia invisível
     msgLbl.Font = Enum.Font.Gotham
     msgLbl.TextSize = 10
     msgLbl.TextXAlignment = Enum.TextXAlignment.Left
     msgLbl.ZIndex = 102
 
-    -- Animação de Fade-In perfeita e suave
-    local tweenIn = TweenService:Create(notif, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        GroupTransparency = 0
-    })
+    -- Controladora de Alpha Sincronizado
+    local alphaVal = Instance.new("NumberValue")
+    alphaVal.Value = 0
+
+    local targetBgTrans = 0.12 -- Fundo preto escuro visível
+
+    local function atualizarAlpha(alpha)
+        if not notif or not notif.Parent then return end
+        notif.BackgroundTransparency = 1 - ((1 - targetBgTrans) * alpha)
+        stroke.Transparency = 1 - alpha
+        accentBar.BackgroundTransparency = 1 - alpha
+        titleLbl.TextTransparency = 1 - alpha
+        msgLbl.TextTransparency = 1 - alpha
+    end
+
+    local conn = alphaVal.Changed:Connect(atualizarAlpha)
+
+    -- Fade-In perfeitamente sincronizado
+    local tweenIn = TweenService:Create(alphaVal, TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Value = 1})
     tweenIn:Play()
 
-    -- Animação de Fade-Out perfeita
+    -- Fade-Out perfeitamente sincronizado
     task.delay(tempo, function()
         if notif and notif.Parent then
-            local tweenOut = TweenService:Create(notif, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                GroupTransparency = 1
-            })
+            local tweenOut = TweenService:Create(alphaVal, TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {Value = 0})
             tweenOut:Play()
             tweenOut.Completed:Connect(function()
-                notif:Destroy()
+                conn:Disconnect()
+                alphaVal:Destroy()
+                if notif and notif.Parent then
+                    notif:Destroy()
+                end
             end)
         end
     end)
