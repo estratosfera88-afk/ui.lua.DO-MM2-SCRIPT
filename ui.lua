@@ -347,78 +347,6 @@ frameStroke.Thickness = 1.2
 frameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border 
 mainFrame.Parent = mainWrapper
 
--- [MÁSCARAS DE CANTO: TORNA SUP-ESQ, SUP-DIR E INF-DIR RETOS, MANTENDO INF-ESQ ARREDONDADO]
-local strokeColor = Color3.fromHex("#161616")
-
-local patchTL = Instance.new("Frame", mainFrame)
-patchTL.Name = "PatchTopLeft"
-patchTL.Size = UDim2.new(0, 12, 0, 12)
-patchTL.Position = UDim2.new(0, 0, 0, 0)
-patchTL.BackgroundColor3 = Color3.fromHex("#0A0A0A")
-patchTL.BackgroundTransparency = 0.22
-patchTL.BorderSizePixel = 0
-patchTL.ZIndex = 5
-
-local lineTL1 = Instance.new("Frame", patchTL)
-lineTL1.Size = UDim2.new(1, 0, 0, 1)
-lineTL1.Position = UDim2.new(0, 0, 0, 0)
-lineTL1.BackgroundColor3 = strokeColor
-lineTL1.BorderSizePixel = 0
-lineTL1.ZIndex = 6
-
-local lineTL2 = Instance.new("Frame", patchTL)
-lineTL2.Size = UDim2.new(0, 1, 1, 0)
-lineTL2.Position = UDim2.new(0, 0, 0, 0)
-lineTL2.BackgroundColor3 = strokeColor
-lineTL2.BorderSizePixel = 0
-lineTL2.ZIndex = 6
-
-local patchTR = Instance.new("Frame", mainFrame)
-patchTR.Name = "PatchTopRight"
-patchTR.Size = UDim2.new(0, 12, 0, 12)
-patchTR.Position = UDim2.new(1, -12, 0, 0)
-patchTR.BackgroundColor3 = Color3.fromHex("#0A0A0A")
-patchTR.BackgroundTransparency = 0.22
-patchTR.BorderSizePixel = 0
-patchTR.ZIndex = 5
-
-local lineTR1 = Instance.new("Frame", patchTR)
-lineTR1.Size = UDim2.new(1, 0, 0, 1)
-lineTR1.Position = UDim2.new(0, 0, 0, 0)
-lineTR1.BackgroundColor3 = strokeColor
-lineTR1.BorderSizePixel = 0
-lineTR1.ZIndex = 6
-
-local lineTR2 = Instance.new("Frame", patchTR)
-lineTR2.Size = UDim2.new(0, 1, 1, 0)
-lineTR2.Position = UDim2.new(1, -1, 0, 0)
-lineTR2.BackgroundColor3 = strokeColor
-lineTR2.BorderSizePixel = 0
-lineTR2.ZIndex = 6
-
-local patchBR = Instance.new("Frame", mainFrame)
-patchBR.Name = "PatchBottomRight"
-patchBR.Size = UDim2.new(0, 12, 0, 12)
-patchBR.Position = UDim2.new(1, -12, 1, -12)
-patchBR.BackgroundColor3 = Color3.fromHex("#0A0A0A")
-patchBR.BackgroundTransparency = 0.22
-patchBR.BorderSizePixel = 0
-patchBR.ZIndex = 5
-
-local lineBR1 = Instance.new("Frame", patchBR)
-lineBR1.Size = UDim2.new(1, 0, 0, 1)
-lineBR1.Position = UDim2.new(0, 0, 1, -1)
-lineBR1.BackgroundColor3 = strokeColor
-lineBR1.BorderSizePixel = 0
-lineBR1.ZIndex = 6
-
-local lineBR2 = Instance.new("Frame", patchBR)
-lineBR2.Size = UDim2.new(0, 1, 1, 0)
-lineBR2.Position = UDim2.new(1, -1, 0, 0)
-lineBR2.BackgroundColor3 = strokeColor
-lineBR2.BorderSizePixel = 0
-lineBR2.ZIndex = 6
-
 local topBar = Instance.new("Frame", mainFrame)
 topBar.Name = "TopBar"
 topBar.Size = UDim2.new(1, 0, 0, 52)
@@ -611,7 +539,7 @@ SidebarBgContainer.ZIndex = 6
 local sidebarCorner = Instance.new("UICorner", SidebarBgContainer)
 sidebarCorner.CornerRadius = UDim.new(0, 9)
 
--- Preenche 3 dos cantos com pontas retas (deixando apenas o canto inferior esquerdo arredondado)
+-- Preenche 3 dos cantos com a mesma cor e transparência exatas do fundo das abas
 local function CriarCantoReto(nome, pos, anchor)
     local patch = Instance.new("Frame", SidebarBgContainer)
     patch.Name = nome
@@ -624,9 +552,9 @@ local function CriarCantoReto(nome, pos, anchor)
     patch.ZIndex = 6
 end
 
-CriarCantoReto("PatchTL", UDim2.new(0, 0, 0, 0), Vector2.new(0, 0)) -- Canto Superior Esquerdo (Ponta reta)
-CriarCantoReto("PatchTR", UDim2.new(1, 0, 0, 0), Vector2.new(1, 0)) -- Canto Superior Direito (Ponta reta)
-CriarCantoReto("PatchBR", UDim2.new(1, 0, 1, 0), Vector2.new(1, 1)) -- Canto Inferior Direito (Ponta reta)
+CriarCantoReto("PatchTL", UDim2.new(0, 0, 0, 0), Vector2.new(0, 0)) -- Canto Superior Esquerdo
+CriarCantoReto("PatchTR", UDim2.new(1, 0, 0, 0), Vector2.new(1, 0)) -- Canto Superior Direito
+CriarCantoReto("PatchBR", UDim2.new(1, 0, 1, 0), Vector2.new(1, 1)) -- Canto Inferior Direito
 
 local SidebarSeparator = Instance.new("Frame", SidebarFrame)
 SidebarSeparator.Size = UDim2.new(0, 1, 1, 0)
