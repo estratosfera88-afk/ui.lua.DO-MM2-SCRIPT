@@ -51,6 +51,16 @@ local isConfirmOpen = false
 local wasMinimizedBeforeConfirm = false
 local searchOpen = false
 
+-- [LIMPEZA COMPLETA DE UIs ANTIGAS - REMOVE DUPLICADAS/FANTASMAS]
+pcall(function()
+    if game:GetService("CoreGui"):FindFirstChild("DeltaAkatUniversalUI") then
+        game:GetService("CoreGui").DeltaAkatUniversalUI:Destroy()
+    end
+    if player:FindFirstChild("PlayerGui") and player.PlayerGui:FindFirstChild("DeltaAkatUniversalUI") then
+        player.PlayerGui.DeltaAkatUniversalUI:Destroy()
+    end
+end)
+
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "DeltaAkatUniversalUI"
 screenGui.ResetOnSpawn = false
@@ -64,9 +74,6 @@ else
     if ok and cg then uiParent = cg end
 end
 
-if uiParent:FindFirstChild("DeltaAkatUniversalUI") then
-    pcall(function() uiParent.DeltaAkatUniversalUI:Destroy() end)
-end
 screenGui.Parent = uiParent
 
 -- [SISTEMA DE GERENCIAMENTO DE TRANSPARÊNCIA SINCRONIZADA]
@@ -115,7 +122,7 @@ local function AplicarFadeSincronizado(raiz, fadeOut, duracao)
             end
         end
         if orig.ImageTransparency then
-            local t = fadeOut and 1 or (obj.Name == "Shadow3D" and 0.5 or orig.ImageTransparency)
+            local t = fadeOut and 1 or (obj.Name == "Shadow3D" and 0.85 or orig.ImageTransparency)
             if obj.ImageTransparency ~= t then
                 if duracao == 0 then obj.ImageTransparency = t else TweenService:Create(obj, info, {ImageTransparency = t}):Play() end
             end
@@ -131,7 +138,7 @@ local function AplicarFadeSincronizado(raiz, fadeOut, duracao)
     for _, desc in ipairs(raiz:GetDescendants()) do tratarObjeto(desc) end
 end
 
--- [SISTEMA DE CLIPBOARD E NOTIFICAÇÃO ESTILO RAYFIELD / AKAT - SISTEMA ALPHA MATEMÁTICO PERFECT SYNC]
+-- [SISTEMA DE CLIPBOARD E NOTIFICAÇÃO ESTILO RAYFIELD / AKAT]
 local function CopiarLinkDiscord()
     local link = "https://discord.gg/tfQYbRXT9Q"
     if setclipboard then
@@ -317,15 +324,16 @@ mainWrapper.BackgroundTransparency = 1
 mainWrapper.Visible = false
 mainWrapper.Parent = screenGui
 
+-- Sombra suavizada para evitar o efeito de "clone transparente" atrás da janela
 local shadow3D = Instance.new("ImageLabel")
 shadow3D.Name = "Shadow3D"
 shadow3D.AnchorPoint = Vector2.new(0.5, 0.5)
-shadow3D.Position = UDim2.new(0.5, 0, 0.5, 4)
-shadow3D.Size = UDim2.new(1, 40, 1, 40)
+shadow3D.Position = UDim2.new(0.5, 0, 0.5, 2)
+shadow3D.Size = UDim2.new(1, 16, 1, 16)
 shadow3D.BackgroundTransparency = 1
 shadow3D.Image = "rbxassetid://6014261993"
 shadow3D.ImageColor3 = Color3.fromRGB(0, 0, 0)
-shadow3D.ImageTransparency = 0.5
+shadow3D.ImageTransparency = 0.85
 shadow3D.ScaleType = Enum.ScaleType.Slice
 shadow3D.SliceCenter = Rect.new(49, 49, 450, 450)
 shadow3D.ZIndex = 1
@@ -335,14 +343,14 @@ local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(1, 0, 1, 0)
 mainFrame.BackgroundColor3 = Color3.fromHex("#0A0A0A")
-mainFrame.BackgroundTransparency = 0.22
+mainFrame.BackgroundTransparency = 0.1
 mainFrame.BorderSizePixel = 0
 mainFrame.ClipsDescendants = true
 mainFrame.ZIndex = 5
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 9)
 
 local frameStroke = Instance.new("UIStroke", mainFrame)
-frameStroke.Color = Color3.fromHex("#161616")
+frameStroke.Color = Color3.fromHex("#1A1A1A")
 frameStroke.Thickness = 1.2
 frameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border 
 mainFrame.Parent = mainWrapper
@@ -513,7 +521,7 @@ local div = Instance.new("Frame", mainFrame)
 div.Name = "Div"
 div.Size = UDim2.new(1, -152, 0, 1)
 div.Position = UDim2.new(0, 140, 0, 52)
-div.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+div.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 div.BorderSizePixel = 0
 div.ZIndex = 6
 
@@ -531,15 +539,13 @@ local SidebarBgContainer = Instance.new("Frame", SidebarFrame)
 SidebarBgContainer.Name = "SidebarBgContainer"
 SidebarBgContainer.Size = UDim2.new(1, 0, 1, 0)
 SidebarBgContainer.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-SidebarBgContainer.BackgroundTransparency = 0.35
+SidebarBgContainer.BackgroundTransparency = 0.5
 SidebarBgContainer.BorderSizePixel = 0
 SidebarBgContainer.ZIndex = 6
 
--- Arredonda os cantos do fundo da Sidebar
 local sidebarCorner = Instance.new("UICorner", SidebarBgContainer)
 sidebarCorner.CornerRadius = UDim.new(0, 9)
 
--- Preenche 3 dos cantos com a mesma cor e transparência exatas do fundo das abas
 local function CriarCantoReto(nome, pos, anchor)
     local patch = Instance.new("Frame", SidebarBgContainer)
     patch.Name = nome
@@ -547,19 +553,19 @@ local function CriarCantoReto(nome, pos, anchor)
     patch.Position = pos
     patch.AnchorPoint = anchor
     patch.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-    patch.BackgroundTransparency = 0.35
+    patch.BackgroundTransparency = 0.5
     patch.BorderSizePixel = 0
     patch.ZIndex = 6
 end
 
-CriarCantoReto("PatchTL", UDim2.new(0, 0, 0, 0), Vector2.new(0, 0)) -- Canto Superior Esquerdo
-CriarCantoReto("PatchTR", UDim2.new(1, 0, 0, 0), Vector2.new(1, 0)) -- Canto Superior Direito
-CriarCantoReto("PatchBR", UDim2.new(1, 0, 1, 0), Vector2.new(1, 1)) -- Canto Inferior Direito
+CriarCantoReto("PatchTL", UDim2.new(0, 0, 0, 0), Vector2.new(0, 0))
+CriarCantoReto("PatchTR", UDim2.new(1, 0, 0, 0), Vector2.new(1, 0))
+CriarCantoReto("PatchBR", UDim2.new(1, 0, 1, 0), Vector2.new(1, 1))
 
 local SidebarSeparator = Instance.new("Frame", SidebarFrame)
 SidebarSeparator.Size = UDim2.new(0, 1, 1, 0)
 SidebarSeparator.Position = UDim2.new(1, -1, 0, 0)
-SidebarSeparator.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+SidebarSeparator.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 SidebarSeparator.BorderSizePixel = 0
 SidebarSeparator.ZIndex = 6
 
@@ -769,7 +775,7 @@ local function filterToggles(currentActiveTab, query)
                         if not child or not child.Parent then return end
                         TweenService:Create(child, TweenInfo.new(0.2, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
                             Size = UDim2.new(1, -8, 0, 56),
-                            BackgroundTransparency = 0.35
+                            BackgroundTransparency = 1 -- Fundo unificado com a janela
                         }):Play()
                         if t then TweenService:Create(t, TweenInfo.new(0.15), {TextTransparency = 0}):Play() end
                         if d then TweenService:Create(d, TweenInfo.new(0.15), {TextTransparency = 0}):Play() end
@@ -788,7 +794,7 @@ local function selectTab(tabName)
         local iconContainer = btn:FindFirstChild("Icon")
         local activeBar = btn:FindFirstChild("ActiveBar")
         if name == tabName then
-            local targetTrans = 0.4
+            local targetTrans = 0.5
             if originalTrans[btn] then
                 originalTrans[btn].BackgroundTransparency = targetTrans
             end
@@ -877,16 +883,17 @@ local function createToggle(parent, configKey, tabCategory)
     local toggleFrame = Instance.new("Frame")
     toggleFrame.Name = configKey
     toggleFrame.Size = UDim2.new(1, -8, 0, 56)
-    toggleFrame.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-    toggleFrame.BackgroundTransparency = 0.35
+    toggleFrame.BackgroundColor3 = Color3.fromHex("#0A0A0A")
+    toggleFrame.BackgroundTransparency = 1 -- Fundo transparente para unificar com o painel principal
     toggleFrame.ZIndex = 6
     toggleFrame.ClipsDescendants = true 
     toggleFrame:SetAttribute("Tab", tabCategory)
     toggleFrame:SetAttribute("ConfigKey", configKey)
     toggleFrame.Parent = parent
     Instance.new("UICorner", toggleFrame).CornerRadius = UDim.new(0, 6)
+    
     local stroke = Instance.new("UIStroke", toggleFrame)
-    stroke.Color = Color3.fromHex("#141414")
+    stroke.Color = Color3.fromHex("#1A1A1A")
     stroke.Thickness = 1
     
     local optData = UI_TEXT.Options[configKey]
