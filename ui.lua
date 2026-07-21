@@ -590,13 +590,29 @@ div.BorderSizePixel = 0
 div.ZIndex = 6
 
 -- [SIDEBAR]
-local SidebarFrame = Instance.new("Frame", mainFrame)
-SidebarFrame.Name = "SidebarFrame"
-SidebarFrame.Size = UDim2.new(0, 140, 1, -52)
-SidebarFrame.Position = UDim2.new(0, 0, 0, 52)
-SidebarFrame.BackgroundTransparency = 1
-SidebarFrame.BorderSizePixel = 0
-SidebarFrame.ZIndex = 6
+local SidebarBgContainer = Instance.new("Frame", SidebarFrame)
+SidebarBgContainer.Name = "SidebarBgContainer"
+SidebarBgContainer.Size = UDim2.new(1, 0, 1, 0)
+SidebarBgContainer.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+SidebarBgContainer.BackgroundTransparency = 0.35
+SidebarBgContainer.BorderSizePixel = 0
+SidebarBgContainer.ZIndex = 6
+
+-- [NOVO] Arredonda todas as bordas do fundo das abas
+local SidebarCorner = Instance.new("UICorner", SidebarBgContainer)
+SidebarCorner.CornerRadius = UDim.new(0, 9)
+
+-- [NOVO] Preenchimento apenas no canto inferior esquerdo para mantê-lo quadrado (com ponta)
+local BottomLeftFiller = Instance.new("Frame", SidebarBgContainer)
+BottomLeftFiller.Name = "BottomLeftFiller"
+BottomLeftFiller.Size = UDim2.new(0, 12, 0, 12)
+BottomLeftFiller.AnchorPoint = Vector2.new(0, 1)
+BottomLeftFiller.Position = UDim2.new(0, 0, 1, 0)
+BottomLeftFiller.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+BottomLeftFiller.BackgroundTransparency = 0.35
+BottomLeftFiller.BorderSizePixel = 0
+BottomLeftFiller.ZIndex = 6
+
 SidebarFrame.ClipsDescendants = true
 
 local SidebarBgContainer = Instance.new("Frame", SidebarFrame)
