@@ -131,7 +131,7 @@ local function AplicarFadeSincronizado(raiz, fadeOut, duracao)
     for _, desc in ipairs(raiz:GetDescendants()) do tratarObjeto(desc) end
 end
 
--- [SISTEMA DE CLIPBOARD E NOTIFICAÇÃO ESTILO RAYFIELD / AKAT - FIX SINCRONIZADO]
+-- [SISTEMA DE CLIPBOARD E NOTIFICAÇÃO ESTILO RAYFIELD / AKAT - FIX CANVASGROUP]
 local function CopiarLinkDiscord()
     local link = "https://discord.gg/tfQYbRXT9Q"
     if setclipboard then
@@ -160,68 +160,69 @@ notifLayout.Padding = UDim.new(0, 8)
 local function CriarNotificacao(titulo, mensagem, tempo)
     tempo = tempo or 4
 
-    local notif = Instance.new("Frame", notifContainer)
+    local notif = Instance.new("CanvasGroup")
     notif.Name = "Notification"
     notif.Size = UDim2.new(1, 0, 0, 52)
-    notif.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-    notif.BackgroundTransparency = 0.15
+    notif.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+    notif.BackgroundTransparency = 0.1
     notif.BorderSizePixel = 0
     notif.ZIndex = 101
+    notif.GroupTransparency = 1 -- Inicia invisível para o fade-in suave
+    notif.Parent = notifContainer
 
-    Instance.new("UICorner", notif).CornerRadius = UDim.new(0, 8)
+    local corner = Instance.new("UICorner", notif)
+    corner.CornerRadius = UDim.new(0, 8)
 
     local stroke = Instance.new("UIStroke", notif)
-    stroke.Color = Color3.fromHex("#1A1A1A")
+    stroke.Color = Color3.fromRGB(35, 35, 35)
     stroke.Thickness = 1.2
-    stroke.Transparency = 0
 
     local accentBar = Instance.new("Frame", notif)
     accentBar.Size = UDim2.new(0, 3, 0, 30)
     accentBar.Position = UDim2.new(0, 10, 0.5, -15)
     accentBar.BackgroundColor3 = Color3.fromHex("#8B0000")
     accentBar.BorderSizePixel = 0
-    accentBar.BackgroundTransparency = 0
     accentBar.ZIndex = 102
     Instance.new("UICorner", accentBar).CornerRadius = UDim.new(1, 0)
 
     local titleLbl = Instance.new("TextLabel", notif)
-    titleLbl.Size = UDim2.new(1, -30, 0, 16)
+    titleLbl.Size = UDim2.new(1, -35, 0, 16)
     titleLbl.Position = UDim2.new(0, 22, 0, 9)
     titleLbl.BackgroundTransparency = 1
     titleLbl.Text = titulo
     titleLbl.TextColor3 = Color3.fromHex("#8B0000")
-    titleLbl.TextTransparency = 0
     titleLbl.Font = Enum.Font.GothamBold
     titleLbl.TextSize = 11
     titleLbl.TextXAlignment = Enum.TextXAlignment.Left
     titleLbl.ZIndex = 102
 
     local msgLbl = Instance.new("TextLabel", notif)
-    msgLbl.Size = UDim2.new(1, -30, 0, 16)
+    msgLbl.Size = UDim2.new(1, -35, 0, 16)
     msgLbl.Position = UDim2.new(0, 22, 0, 27)
     msgLbl.BackgroundTransparency = 1
     msgLbl.Text = mensagem
     msgLbl.TextColor3 = Color3.fromRGB(220, 220, 220)
-    msgLbl.TextTransparency = 0
     msgLbl.Font = Enum.Font.Gotham
     msgLbl.TextSize = 10
     msgLbl.TextXAlignment = Enum.TextXAlignment.Left
     msgLbl.ZIndex = 102
 
-    -- Define o estado inicial como 100% transparente de forma síncrona
-    AplicarFadeSincronizado(notif, true, 0)
+    -- Animação de Fade-In perfeita e suave
+    local tweenIn = TweenService:Create(notif, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        GroupTransparency = 0
+    })
+    tweenIn:Play()
 
-    -- Animação de entrada rápida (Fade-In) totalmente sincronizada
-    AplicarFadeSincronizado(notif, false, 0.15)
-
-    -- Animação de saída rápida (Fade-Out) totalmente sincronizada
+    -- Animação de Fade-Out perfeita
     task.delay(tempo, function()
         if notif and notif.Parent then
-            AplicarFadeSincronizado(notif, true, 0.15)
-            task.wait(0.18)
-            if notif and notif.Parent then
+            local tweenOut = TweenService:Create(notif, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                GroupTransparency = 1
+            })
+            tweenOut:Play()
+            tweenOut.Completed:Connect(function()
                 notif:Destroy()
-            end
+            end)
         end
     end)
 end
