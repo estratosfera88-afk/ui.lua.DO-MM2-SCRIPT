@@ -153,13 +153,18 @@ AplicarFadeSincronizado(notif, true, 0)
 AplicarFadeSincronizado(notif, false, 0.15)
 
     -- Animação de saída rápida (Fade-Out)
-     AplicarFadeSincronizado(notif, true, 0.15)
+    task.delay(tempo, function()
+        if notif and notif.Parent then
+            AplicarFadeSincronizado(notif, true, 0.15)
 
-task.delay(0.15, function()
-    if notif and notif.Parent then
-        notif:Destroy()
-    end
-end)
+            task.delay(0.15, function()
+                   if notif and notif.Parent then
+                         notif:Destroy()
+              end
+           end)
+        end
+    end)
+end
 
 local function ConfigurarArrastarAkat(inst, trigger)
     trigger = trigger or inst
