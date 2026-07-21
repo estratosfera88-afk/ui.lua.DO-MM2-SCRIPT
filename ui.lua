@@ -612,7 +612,6 @@ BottomLeftFiller.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
 BottomLeftFiller.BackgroundTransparency = 0.35
 BottomLeftFiller.BorderSizePixel = 0
 BottomLeftFiller.ZIndex = 6
-
 SidebarFrame.ClipsDescendants = true
 
 local SidebarBgContainer = Instance.new("Frame", SidebarFrame)
