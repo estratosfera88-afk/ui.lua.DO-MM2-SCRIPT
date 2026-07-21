@@ -164,7 +164,7 @@ local function CriarNotificacao(titulo, mensagem, tempo)
     notif.Name = "Notification"
     notif.Size = UDim2.new(1, 0, 0, 52)
     notif.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-    notif.BackgroundTransparency = 1 -- Inicia invisível
+    notif.BackgroundTransparency = 1
     notif.BorderSizePixel = 0
     notif.ZIndex = 101
     notif.ClipsDescendants = true
@@ -176,14 +176,14 @@ local function CriarNotificacao(titulo, mensagem, tempo)
     local stroke = Instance.new("UIStroke", notif)
     stroke.Color = Color3.fromRGB(35, 35, 35)
     stroke.Thickness = 1.2
-    stroke.Transparency = 1 -- Inicia invisível
+    stroke.Transparency = 1
 
     local accentBar = Instance.new("Frame", notif)
     accentBar.Size = UDim2.new(0, 3, 0, 30)
     accentBar.Position = UDim2.new(0, 10, 0.5, -15)
     accentBar.BackgroundColor3 = Color3.fromHex("#8B0000")
     accentBar.BorderSizePixel = 0
-    accentBar.BackgroundTransparency = 1 -- Inicia invisível
+    accentBar.BackgroundTransparency = 1
     accentBar.ZIndex = 102
     Instance.new("UICorner", accentBar).CornerRadius = UDim.new(1, 0)
 
@@ -193,7 +193,7 @@ local function CriarNotificacao(titulo, mensagem, tempo)
     titleLbl.BackgroundTransparency = 1
     titleLbl.Text = titulo
     titleLbl.TextColor3 = Color3.fromHex("#8B0000")
-    titleLbl.TextTransparency = 1 -- Inicia invisível
+    titleLbl.TextTransparency = 1
     titleLbl.Font = Enum.Font.GothamBold
     titleLbl.TextSize = 11
     titleLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -205,17 +205,16 @@ local function CriarNotificacao(titulo, mensagem, tempo)
     msgLbl.BackgroundTransparency = 1
     msgLbl.Text = mensagem
     msgLbl.TextColor3 = Color3.fromRGB(220, 220, 220)
-    msgLbl.TextTransparency = 1 -- Inicia invisível
+    msgLbl.TextTransparency = 1
     msgLbl.Font = Enum.Font.Gotham
     msgLbl.TextSize = 10
     msgLbl.TextXAlignment = Enum.TextXAlignment.Left
     msgLbl.ZIndex = 102
 
-    -- Controladora de Alpha Sincronizado
     local alphaVal = Instance.new("NumberValue")
     alphaVal.Value = 0
 
-    local targetBgTrans = 0.12 -- Fundo preto escuro visível
+    local targetBgTrans = 0.12
 
     local function atualizarAlpha(alpha)
         if not notif or not notif.Parent then return end
@@ -228,11 +227,9 @@ local function CriarNotificacao(titulo, mensagem, tempo)
 
     local conn = alphaVal.Changed:Connect(atualizarAlpha)
 
-    -- Fade-In perfeitamente sincronizado
     local tweenIn = TweenService:Create(alphaVal, TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Value = 1})
     tweenIn:Play()
 
-    -- Fade-Out perfeitamente sincronizado
     task.delay(tempo, function()
         if notif and notif.Parent then
             local tweenOut = TweenService:Create(alphaVal, TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {Value = 0})
@@ -334,12 +331,13 @@ shadow3D.SliceCenter = Rect.new(49, 49, 450, 450)
 shadow3D.ZIndex = 1
 shadow3D.Parent = mainWrapper
 
-local mainFrame = Instance.new("CanvasGroup")
+local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(1, 0, 1, 0)
 mainFrame.BackgroundColor3 = Color3.fromHex("#0A0A0A")
 mainFrame.BackgroundTransparency = 0.22
 mainFrame.BorderSizePixel = 0
+mainFrame.ClipsDescendants = true
 mainFrame.ZIndex = 5
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 9)
 
@@ -348,6 +346,78 @@ frameStroke.Color = Color3.fromHex("#161616")
 frameStroke.Thickness = 1.2
 frameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border 
 mainFrame.Parent = mainWrapper
+
+-- [MÁSCARAS DE CANTO: TORNA SUP-ESQ, SUP-DIR E INF-DIR RETOS, MANTENDO INF-ESQ ARREDONDADO]
+local strokeColor = Color3.fromHex("#161616")
+
+local patchTL = Instance.new("Frame", mainFrame)
+patchTL.Name = "PatchTopLeft"
+patchTL.Size = UDim2.new(0, 12, 0, 12)
+patchTL.Position = UDim2.new(0, 0, 0, 0)
+patchTL.BackgroundColor3 = Color3.fromHex("#0A0A0A")
+patchTL.BackgroundTransparency = 0.22
+patchTL.BorderSizePixel = 0
+patchTL.ZIndex = 5
+
+local lineTL1 = Instance.new("Frame", patchTL)
+lineTL1.Size = UDim2.new(1, 0, 0, 1)
+lineTL1.Position = UDim2.new(0, 0, 0, 0)
+lineTL1.BackgroundColor3 = strokeColor
+lineTL1.BorderSizePixel = 0
+lineTL1.ZIndex = 6
+
+local lineTL2 = Instance.new("Frame", patchTL)
+lineTL2.Size = UDim2.new(0, 1, 1, 0)
+lineTL2.Position = UDim2.new(0, 0, 0, 0)
+lineTL2.BackgroundColor3 = strokeColor
+lineTL2.BorderSizePixel = 0
+lineTL2.ZIndex = 6
+
+local patchTR = Instance.new("Frame", mainFrame)
+patchTR.Name = "PatchTopRight"
+patchTR.Size = UDim2.new(0, 12, 0, 12)
+patchTR.Position = UDim2.new(1, -12, 0, 0)
+patchTR.BackgroundColor3 = Color3.fromHex("#0A0A0A")
+patchTR.BackgroundTransparency = 0.22
+patchTR.BorderSizePixel = 0
+patchTR.ZIndex = 5
+
+local lineTR1 = Instance.new("Frame", patchTR)
+lineTR1.Size = UDim2.new(1, 0, 0, 1)
+lineTR1.Position = UDim2.new(0, 0, 0, 0)
+lineTR1.BackgroundColor3 = strokeColor
+lineTR1.BorderSizePixel = 0
+lineTR1.ZIndex = 6
+
+local lineTR2 = Instance.new("Frame", patchTR)
+lineTR2.Size = UDim2.new(0, 1, 1, 0)
+lineTR2.Position = UDim2.new(1, -1, 0, 0)
+lineTR2.BackgroundColor3 = strokeColor
+lineTR2.BorderSizePixel = 0
+lineTR2.ZIndex = 6
+
+local patchBR = Instance.new("Frame", mainFrame)
+patchBR.Name = "PatchBottomRight"
+patchBR.Size = UDim2.new(0, 12, 0, 12)
+patchBR.Position = UDim2.new(1, -12, 1, -12)
+patchBR.BackgroundColor3 = Color3.fromHex("#0A0A0A")
+patchBR.BackgroundTransparency = 0.22
+patchBR.BorderSizePixel = 0
+patchBR.ZIndex = 5
+
+local lineBR1 = Instance.new("Frame", patchBR)
+lineBR1.Size = UDim2.new(1, 0, 0, 1)
+lineBR1.Position = UDim2.new(0, 0, 1, -1)
+lineBR1.BackgroundColor3 = strokeColor
+lineBR1.BorderSizePixel = 0
+lineBR1.ZIndex = 6
+
+local lineBR2 = Instance.new("Frame", patchBR)
+lineBR2.Size = UDim2.new(0, 1, 1, 0)
+lineBR2.Position = UDim2.new(1, -1, 0, 0)
+lineBR2.BackgroundColor3 = strokeColor
+lineBR2.BorderSizePixel = 0
+lineBR2.ZIndex = 6
 
 local topBar = Instance.new("Frame", mainFrame)
 topBar.Name = "TopBar"
@@ -1113,7 +1183,6 @@ local function ExecutarIntroAkat()
     IntroLine.ZIndex = 503
     Instance.new("UICorner", IntroLine).CornerRadius = UDim.new(1, 0)
 
-    -- Fundo preto escuro e blur profundo
     TweenService:Create(IntroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0.05}):Play()
     TweenService:Create(Blur, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 24}):Play()
     task.wait(0.1)
@@ -1157,7 +1226,6 @@ local function ExecutarIntroAkat()
         IntroFrame:Destroy()
         Blur:Destroy()
 
-        -- Copia o link e exibe a notificação no estilo AKAT / Rayfield
         CopiarLinkDiscord()
         CriarNotificacao("AKAT COMMUNITY", "Link Discord Copied", 4)
     end)
@@ -1194,7 +1262,6 @@ AplicarEfeitoFisicoBotao(SearchBtn, Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(MinimizeBtn, Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(CloseBtn, Color3.fromRGB(255, 60, 60))
 
--- ORDEM DE CRIAÇÃO
 createTabBtn("Player")
 createTabBtn("Combat")
 createTabBtn("Visuals")
