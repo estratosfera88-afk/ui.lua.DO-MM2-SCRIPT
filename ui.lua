@@ -98,14 +98,14 @@ notifLayout.Padding = UDim.new(0, 8)
 local function CriarNotificacao(titulo, mensagem, tempo)
     tempo = tempo or 4
 
-    local notif = Instance.new("Frame", notifContainer)
+    local notif = Instance.new("CanvasGroup", notifContainer)
     notif.Name = "Notification"
     notif.Size = UDim2.new(1, 0, 0, 52)
     notif.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
     notif.BackgroundTransparency = 0.15
     notif.BorderSizePixel = 0
     notif.ZIndex = 101
-    notif.ClipsDescendants = true
+    notif.GroupTransparency = 1 -- Inicia totalmente invisível
 
     Instance.new("UICorner", notif).CornerRadius = UDim.new(0, 8)
 
@@ -143,17 +143,17 @@ local function CriarNotificacao(titulo, mensagem, tempo)
     msgLbl.TextXAlignment = Enum.TextXAlignment.Left
     msgLbl.ZIndex = 102
 
-    -- Animação de entrada (Slide Rayfield Style)
-    notif.Position = UDim2.new(1, 300, 0, 0)
-    local tweenIn = TweenService:Create(notif, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0, 0, 0, 0)
+    -- Animação de entrada rápida (Fade-In)
+    local tweenIn = TweenService:Create(notif, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        GroupTransparency = 0
     })
     tweenIn:Play()
 
+    -- Animação de saída rápida (Fade-Out)
     task.delay(tempo, function()
         if notif and notif.Parent then
-            local tweenOut = TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
-                Position = UDim2.new(1, 300, 0, 0)
+            local tweenOut = TweenService:Create(notif, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                GroupTransparency = 1
             })
             tweenOut:Play()
             tweenOut.Completed:Connect(function()
