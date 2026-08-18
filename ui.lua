@@ -281,7 +281,7 @@ local function ConfigurarArrastarAkat(inst, trigger)
     end)
 end
 
--- [BOTÃO FLUTUANTE DO MENU COM SHARINGAN]
+-- [BOTÃO FLUTUANTE DO MENU]
 local FloatBtn = Instance.new("ImageButton", screenGui)
 FloatBtn.Name = "FloatBtn"
 FloatBtn.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -292,36 +292,6 @@ FloatBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
 FloatBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 FloatBtn.Visible = false
 FloatBtn.ZIndex = 30
-FloatBtn.ClipsDescendants = false -- Permite o efeito de expansão
-
--- [SHARINGAN ATRÁS DO BOTÃO]
-local Sharingan = Instance.new("ImageLabel", FloatBtn)
-Sharingan.Name = "SharinganEffect"
-Sharingan.Size = UDim2.new(2.5, 0, 2.5, 0)
-Sharingan.Position = UDim2.new(0.5, 0, 0.5, 0)
-Sharingan.AnchorPoint = Vector2.new(0.5, 0.5)
-Sharingan.BackgroundTransparency = 1
-Sharingan.Image = "rbxassetid://100882509796042"
-Sharingan.ZIndex = 29 -- Fica atrás do botão (ZIndex 30)
-
--- [SOM DO SHARINGAN]
-local SharinganSound = Instance.new("Sound", FloatBtn)
-SharinganSound.SoundId = "rbxassetid://6310837681"
-SharinganSound.Volume = 1
-
--- [ANIMAÇÃO DE ROTAÇÃO LENTA]
-local RotateTween = TweenService:Create(Sharingan, TweenInfo.new(8, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), {Rotation = 360})
-RotateTween:Play()
-
--- [EFEITO DE BRILHO LENTO]
-task.spawn(function()
-    while true do
-        TweenService:Create(Sharingan, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 0, true), {ImageTransparency = 0.5}):Play()
-        task.wait(2)
-        TweenService:Create(Sharingan, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 0, true), {ImageTransparency = 0}):Play()
-        task.wait(2)
-    end
-end)
 
 local floatCorner = Instance.new("UICorner", FloatBtn)
 floatCorner.CornerRadius = UDim.new(0, 8)
@@ -330,30 +300,15 @@ local FloatStroke = Instance.new("UIStroke", FloatBtn)
 FloatStroke.Thickness = 1
 FloatStroke.Color = Color3.fromRGB(139, 0, 0)
 
--- [FUNÇÃO DO CLIQUE]
-local function ExecutarEfeitoClique()
-    SharinganSound:Play()
-    
-    -- Efeito de brilho e expansão
-    local originalSize = FloatBtn.Size
-    local burstEffect = TweenService:Create(FloatBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 60, 0, 60)})
-    local backToNormal = TweenService:Create(FloatBtn, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {Size = originalSize})
-    
-    -- Brilho forte temporário no Sharingan
-    Sharingan.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    
-    burstEffect:Play()
-    burstEffect.Completed:Connect(function()
-        backToNormal:Play()
-        Sharingan.ImageColor3 = Color3.fromRGB(255, 255, 255) -- Reset
-    end)
-end
+local StrokeGradient = Instance.new("UIGradient", FloatStroke)
+StrokeGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromHex("#8B0000")),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(15, 15, 15)),
+    ColorSequenceKeypoint.new(1, Color3.fromHex("#8B0000"))
+})
 
-FloatBtn.MouseButton1Click:Connect(function()
-    ExecutarEfeitoClique()
-    AnimarCliqueFloatBtn()
-    alternarVisibilidadeMenu()
-end)
+local rotTweenInfo = TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
+TweenService:Create(StrokeGradient, rotTweenInfo, {Rotation = 360}):Play()
 
 -- [ESTRUTURA GERAL DO MENU]
 local mainWrapper = Instance.new("Frame")
