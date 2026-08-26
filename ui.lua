@@ -22,6 +22,33 @@ local Configs = {
 	ChatRoles   = false
 }
 
+-- Expõe globalmente para o script de lógica ler
+getgenv().AkatConfigs = Configs
+
+-- ==================== MAPA: CONFIG KEY → CALLBACK KEY ====================
+-- Quando um toggle muda, chamamos o callback correto no script de lógica.
+local CALLBACK_MAP = {
+	ESP         = "ESP",
+	Aimbot      = "Aimbot",
+	Speed       = "Speed",
+	Reach       = "Reach",
+	AntiFling   = "AntiFling",
+	TpToGun     = "TpToGun",
+	SafeSpot    = "SafeSpot",
+	AutoCollect = "AutoCollect",
+	ChatRoles   = "ChatRoles",
+}
+
+local function FireCallback(configKey, value)
+	local cbKey = CALLBACK_MAP[configKey]
+	if not cbKey then return end
+	-- _G e getgenv() são equivalentes no Delta; tentamos os dois
+	local callbacks = (getgenv and getgenv().AkatCallbacks) or _G.AkatCallbacks
+	if callbacks and type(callbacks[cbKey]) == "function" then
+		pcall(callbacks[cbKey], value)
+	end
+end
+
 -- ==================== DYNAMIC UI COMPONENT & STATE MACHINE ====================
 local UIState = "CLOSED"
 
@@ -462,12 +489,10 @@ end
 TabsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateTabsCanvas)
 TabsContainer:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateTabsCanvas)
 
--- ==================== ACTIVEBAR REUTILIZÁVEL (CORRIGIDA) ====================
--- Criamos um contêiner com ClipsDescendants para impedir que a ActiveBar
--- vaze por cima da barra de pesquisa e do perfil.
+-- ==================== ACTIVEBAR REUTILIZÁVEL ====================
 local ActiveBarContainer   = Instance.new("Frame", LeftPanel)
 ActiveBarContainer.Name    = "ActiveBarContainer"
-ActiveBarContainer.Size    = UDim2.new(1, -8, 1, -152) -- Mesmo tamanho e local do TabsContainer
+ActiveBarContainer.Size    = UDim2.new(1, -8, 1, -152)
 ActiveBarContainer.Position = UDim2.new(0, 4, 0, 87)
 ActiveBarContainer.BackgroundTransparency = 1
 ActiveBarContainer.ClipsDescendants = true
@@ -477,7 +502,7 @@ local sharedActiveBar      = Instance.new("Frame", ActiveBarContainer)
 sharedActiveBar.Name       = "SharedActiveBar"
 sharedActiveBar.AnchorPoint = Vector2.new(0, 0.5)
 sharedActiveBar.Size       = UDim2.new(0, 3, 0, 22)
-sharedActiveBar.Position   = UDim2.new(0, 7, 0, 0) -- 11 absoluto - 4 do container
+sharedActiveBar.Position   = UDim2.new(0, 7, 0, 0)
 sharedActiveBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 sharedActiveBar.BorderSizePixel = 0
 sharedActiveBar.Visible    = false
@@ -726,7 +751,7 @@ end
 containerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateCanvasSize)
 togglesContainer:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateCanvasSize)
 
--- ==================== CONFIRM FRAME & INTENSE BLUR ====================
+-- ==================== CONFIRM FRAME & BLUR ====================
 local confirmBlur          = Instance.new("BlurEffect", Lighting)
 confirmBlur.Name           = "ConfirmBlur"
 confirmBlur.Size           = 0
@@ -842,7 +867,7 @@ RunService.RenderStepped:Connect(function()
 	badgeStrokeGrad.Rotation  = (t * 10)  % 360
 end)
 
--- ==================== SISTEMA DE NOTIFICAÇÃO (STACK / FILA) ====================
+-- ==================== SISTEMA DE NOTIFICAÇÃO ====================
 local ActiveNotifications = {}
 local NOTIF_DURATION      = 10
 
@@ -860,7 +885,6 @@ local function UpdateNotifications()
 	end
 end
 
--- ==================== NOTIFICAÇÃO GENÉRICA ====================
 local function CriarNotificacao(titulo, descricao, iconeId)
 	local notifHolder              = Instance.new("Frame", screenGui)
 	notifHolder.Name               = "NotifHolder"
@@ -882,7 +906,6 @@ local function CriarNotificacao(titulo, descricao, iconeId)
 	Instance.new("UICorner", notifCard).CornerRadius = UDim.new(0, 16)
 
 	local notifShadow              = Instance.new("ImageLabel", notifCard)
-	notifShadow.Name               = "Shadow"
 	notifShadow.AnchorPoint        = Vector2.new(0.5, 0.5)
 	notifShadow.Position           = UDim2.new(0.5, 0, 0.5, 4)
 	notifShadow.Size               = UDim2.new(1, 24, 1, 24)
@@ -941,40 +964,16 @@ local function CriarNotificacao(titulo, descricao, iconeId)
 	notifCloseBtn.ZIndex           = 205
 	notifCloseBtn.BorderSizePixel  = 0
 	Instance.new("UICorner", notifCloseBtn).CornerRadius = UDim.new(0, 6)
-	local xStroke                  = Instance.new("UIStroke", notifCloseBtn)
-	xStroke.Color                  = Color3.fromRGB(80, 80, 85)
-	xStroke.Thickness              = 1
-	xStroke.Transparency           = 0.5
-
-	local xL1                      = Instance.new("Frame", notifCloseBtn)
-	xL1.AnchorPoint                = Vector2.new(0.5, 0.5)
-	xL1.Position                   = UDim2.new(0.5, 0, 0.5, 0)
-	xL1.Size                       = UDim2.new(0, 10, 0, 1.5)
-	xL1.Rotation                   = 45
-	xL1.BackgroundColor3           = Color3.fromRGB(160, 160, 165)
-	xL1.BorderSizePixel            = 0
-	xL1.ZIndex                     = 206
-	Instance.new("UICorner", xL1).CornerRadius = UDim.new(1, 0)
-	local xL2                      = Instance.new("Frame", notifCloseBtn)
-	xL2.AnchorPoint                = Vector2.new(0.5, 0.5)
-	xL2.Position                   = UDim2.new(0.5, 0, 0.5, 0)
-	xL2.Size                       = UDim2.new(0, 10, 0, 1.5)
-	xL2.Rotation                   = -45
-	xL2.BackgroundColor3           = Color3.fromRGB(160, 160, 165)
-	xL2.BorderSizePixel            = 0
-	xL2.ZIndex                     = 206
-	Instance.new("UICorner", xL2).CornerRadius = UDim.new(1, 0)
-
-	notifCloseBtn.MouseEnter:Connect(function()
-		TweenService:Create(notifCloseBtn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(160, 20, 20)}):Play()
-		TweenService:Create(xL1, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-		TweenService:Create(xL2, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-	end)
-	notifCloseBtn.MouseLeave:Connect(function()
-		TweenService:Create(notifCloseBtn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(35, 35, 38)}):Play()
-		TweenService:Create(xL1, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(160, 160, 165)}):Play()
-		TweenService:Create(xL2, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(160, 160, 165)}):Play()
-	end)
+	local xL1 = Instance.new("Frame", notifCloseBtn)
+	xL1.AnchorPoint = Vector2.new(0.5, 0.5); xL1.Position = UDim2.new(0.5,0,0.5,0)
+	xL1.Size = UDim2.new(0,10,0,1.5); xL1.Rotation = 45
+	xL1.BackgroundColor3 = Color3.fromRGB(160,160,165); xL1.BorderSizePixel = 0; xL1.ZIndex = 206
+	Instance.new("UICorner", xL1).CornerRadius = UDim.new(1,0)
+	local xL2 = Instance.new("Frame", notifCloseBtn)
+	xL2.AnchorPoint = Vector2.new(0.5, 0.5); xL2.Position = UDim2.new(0.5,0,0.5,0)
+	xL2.Size = UDim2.new(0,10,0,1.5); xL2.Rotation = -45
+	xL2.BackgroundColor3 = Color3.fromRGB(160,160,165); xL2.BorderSizePixel = 0; xL2.ZIndex = 206
+	Instance.new("UICorner", xL2).CornerRadius = UDim.new(1,0)
 
 	local progressBg               = Instance.new("Frame", notifCard)
 	progressBg.Size                = UDim2.new(1, -28, 0, 3)
@@ -984,10 +983,8 @@ local function CriarNotificacao(titulo, descricao, iconeId)
 	progressBg.ZIndex              = 202
 	progressBg.ClipsDescendants    = true
 	Instance.new("UICorner", progressBg).CornerRadius = UDim.new(1, 0)
-
 	local progressBar              = Instance.new("Frame", progressBg)
 	progressBar.Size               = UDim2.new(1, 0, 1, 0)
-	progressBar.Position           = UDim2.new(0, 0, 0, 0)
 	progressBar.BackgroundColor3   = Color3.fromRGB(255, 255, 255)
 	progressBar.BorderSizePixel    = 0
 	progressBar.ZIndex             = 203
@@ -1000,7 +997,6 @@ local function CriarNotificacao(titulo, descricao, iconeId)
 
 	table.insert(ActiveNotifications, 1, notifHolder)
 	UpdateNotifications()
-
 	TweenService:Create(notifHolder, TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
 		Position = UDim2.new(1, -20, 1, -24)
 	}):Play()
@@ -1023,373 +1019,141 @@ local function CriarNotificacao(titulo, descricao, iconeId)
 		end)
 	end
 
-	notifCloseBtn.MouseButton1Click:Connect(function() DismissNotif() end)
+	notifCloseBtn.MouseButton1Click:Connect(DismissNotif)
 	local barTween = TweenService:Create(progressBar, TweenInfo.new(NOTIF_DURATION, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 1, 0)})
 	task.delay(0.1, function() barTween:Play() end)
-	task.delay(NOTIF_DURATION + 0.1, function() DismissNotif() end)
+	task.delay(NOTIF_DURATION + 0.1, DismissNotif)
 end
 
--- ==================== NOTIFICAÇÃO DE LINK COPIADO ====================
 local function CriarNotificacaoLinkCopiado(texto, iconeId)
-	local notifHolder              = Instance.new("Frame", screenGui)
-	notifHolder.Name               = "NotifHolderLink"
-	notifHolder.AnchorPoint        = Vector2.new(1, 1)
-	notifHolder.Size               = UDim2.new(0, 330, 0, 64)
-	notifHolder.Position           = UDim2.new(1, 360, 1, -24)
+	local notifHolder = Instance.new("Frame", screenGui)
+	notifHolder.Name = "NotifHolderLink"
+	notifHolder.AnchorPoint = Vector2.new(1, 1)
+	notifHolder.Size = UDim2.new(0, 330, 0, 64)
+	notifHolder.Position = UDim2.new(1, 360, 1, -24)
 	notifHolder.BackgroundTransparency = 1
-	notifHolder.ZIndex             = 200
-	notifHolder.ClipsDescendants   = false
-
-	local notifCard                = Instance.new("Frame", notifHolder)
-	notifCard.Name                 = "NotifCard"
-	notifCard.Size                 = UDim2.new(1, 0, 1, 0)
-	notifCard.BackgroundColor3     = Color3.fromRGB(16, 16, 18)
+	notifHolder.ZIndex = 200
+	local notifCard = Instance.new("Frame", notifHolder)
+	notifCard.Size = UDim2.new(1,0,1,0)
+	notifCard.BackgroundColor3 = Color3.fromRGB(16,16,18)
 	notifCard.BackgroundTransparency = 0.25
-	notifCard.BorderSizePixel      = 0
-	notifCard.ZIndex               = 201
-	notifCard.ClipsDescendants     = false
-	Instance.new("UICorner", notifCard).CornerRadius = UDim.new(0, 16)
-
-	local notifShadow              = Instance.new("ImageLabel", notifCard)
-	notifShadow.Name               = "Shadow"
-	notifShadow.AnchorPoint        = Vector2.new(0.5, 0.5)
-	notifShadow.Position           = UDim2.new(0.5, 0, 0.5, 4)
-	notifShadow.Size               = UDim2.new(1, 24, 1, 24)
-	notifShadow.BackgroundTransparency = 1
-	notifShadow.Image              = "rbxassetid://5554831957"
-	notifShadow.ImageColor3        = Color3.fromRGB(0, 0, 0)
-	notifShadow.ImageTransparency  = 0.35
-	notifShadow.ScaleType          = Enum.ScaleType.Slice
-	notifShadow.SliceCenter        = Rect.new(36, 36, 114, 114)
-	notifShadow.ZIndex             = 200
-
-	local accentBar                = Instance.new("Frame", notifCard)
-	accentBar.Size                 = UDim2.new(0, 4, 0, 36)
-	accentBar.Position             = UDim2.new(0, 14, 0.5, -18)
-	accentBar.BackgroundColor3     = Color3.fromRGB(180, 20, 20)
-	accentBar.BorderSizePixel      = 0
-	accentBar.ZIndex               = 202
-	Instance.new("UICorner", accentBar).CornerRadius = UDim.new(1, 0)
-	local accentGrad               = Instance.new("UIGradient", accentBar)
-	accentGrad.Rotation            = 90
-	accentGrad.Color               = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(230, 30, 30)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 10, 10))
-	})
-
-	local contentContainer         = Instance.new("Frame", notifCard)
-	contentContainer.Size          = UDim2.new(1, -64, 1, -12)
-	contentContainer.Position      = UDim2.new(0, 26, 0, 6)
-	contentContainer.BackgroundTransparency = 1
-	local cLayout                  = Instance.new("UIListLayout", contentContainer)
-	cLayout.FillDirection          = Enum.FillDirection.Horizontal
-	cLayout.SortOrder              = Enum.SortOrder.LayoutOrder
-	cLayout.VerticalAlignment      = Enum.VerticalAlignment.Center
-	cLayout.HorizontalAlignment    = Enum.HorizontalAlignment.Center
-	cLayout.Padding                = UDim.new(0, 8)
-
-	local notifText                = Instance.new("TextLabel", contentContainer)
-	notifText.LayoutOrder          = 1
-	notifText.AutomaticSize        = Enum.AutomaticSize.X
-	notifText.Size                 = UDim2.new(0, 0, 0, 24)
-	notifText.BackgroundTransparency = 1
-	notifText.Text                 = texto or "LINK COPIED SUCCESSFULLY"
-	notifText.TextColor3           = Color3.fromRGB(240, 240, 240)
-	notifText.Font                 = Enum.Font.GothamBold
-	notifText.TextSize             = 15
-	notifText.TextXAlignment       = Enum.TextXAlignment.Left
-	notifText.ZIndex               = 203
-
-	if iconeId then
-		local verifyIcon           = Instance.new("ImageLabel", contentContainer)
-		verifyIcon.LayoutOrder     = 2
-		verifyIcon.Size            = UDim2.new(0, 24, 0, 24)
-		verifyIcon.BackgroundTransparency = 1
-		verifyIcon.Image           = iconeId
-		verifyIcon.ZIndex          = 204
-	end
-
-	local notifCloseBtn            = Instance.new("TextButton", notifCard)
-	notifCloseBtn.Size             = UDim2.new(0, 20, 0, 20)
-	notifCloseBtn.Position         = UDim2.new(1, -28, 0.5, -10)
-	notifCloseBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 38)
-	notifCloseBtn.BackgroundTransparency = 0.2
-	notifCloseBtn.Text             = ""
-	notifCloseBtn.ZIndex           = 205
-	notifCloseBtn.BorderSizePixel  = 0
-	Instance.new("UICorner", notifCloseBtn).CornerRadius = UDim.new(0, 6)
-	local xStroke                  = Instance.new("UIStroke", notifCloseBtn)
-	xStroke.Color                  = Color3.fromRGB(80, 80, 85)
-	xStroke.Thickness              = 1
-	xStroke.Transparency           = 0.5
-	local xL1                      = Instance.new("Frame", notifCloseBtn)
-	xL1.AnchorPoint                = Vector2.new(0.5, 0.5)
-	xL1.Position                   = UDim2.new(0.5, 0, 0.5, 0)
-	xL1.Size                       = UDim2.new(0, 8, 0, 1.5)
-	xL1.Rotation                   = 45
-	xL1.BackgroundColor3           = Color3.fromRGB(160, 160, 165)
-	xL1.BorderSizePixel            = 0
-	xL1.ZIndex                     = 206
-	Instance.new("UICorner", xL1).CornerRadius = UDim.new(1, 0)
-	local xL2                      = Instance.new("Frame", notifCloseBtn)
-	xL2.AnchorPoint                = Vector2.new(0.5, 0.5)
-	xL2.Position                   = UDim2.new(0.5, 0, 0.5, 0)
-	xL2.Size                       = UDim2.new(0, 8, 0, 1.5)
-	xL2.Rotation                   = -45
-	xL2.BackgroundColor3           = Color3.fromRGB(160, 160, 165)
-	xL2.BorderSizePixel            = 0
-	xL2.ZIndex                     = 206
-	Instance.new("UICorner", xL2).CornerRadius = UDim.new(1, 0)
-
-	notifCloseBtn.MouseEnter:Connect(function()
-		TweenService:Create(notifCloseBtn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(160, 20, 20)}):Play()
-		TweenService:Create(xL1, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-		TweenService:Create(xL2, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-	end)
-	notifCloseBtn.MouseLeave:Connect(function()
-		TweenService:Create(notifCloseBtn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(35, 35, 38)}):Play()
-		TweenService:Create(xL1, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(160, 160, 165)}):Play()
-		TweenService:Create(xL2, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(160, 160, 165)}):Play()
-	end)
-
-	local progressBg               = Instance.new("Frame", notifCard)
-	progressBg.Size                = UDim2.new(1, -28, 0, 3)
-	progressBg.Position            = UDim2.new(0, 14, 1, -8)
-	progressBg.BackgroundColor3    = Color3.fromRGB(30, 30, 35)
-	progressBg.BorderSizePixel     = 0
-	progressBg.ZIndex              = 202
-	progressBg.ClipsDescendants    = true
-	Instance.new("UICorner", progressBg).CornerRadius = UDim.new(1, 0)
-	local progressBar              = Instance.new("Frame", progressBg)
-	progressBar.Size               = UDim2.new(1, 0, 1, 0)
-	progressBar.Position           = UDim2.new(0, 0, 0, 0)
-	progressBar.BackgroundColor3   = Color3.fromRGB(255, 255, 255)
-	progressBar.BorderSizePixel    = 0
-	progressBar.ZIndex             = 203
-	Instance.new("UICorner", progressBar).CornerRadius = UDim.new(1, 0)
-	local progressGrad             = Instance.new("UIGradient", progressBar)
-	progressGrad.Color             = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(230, 20, 25)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 0, 0))
-	})
+	notifCard.BorderSizePixel = 0
+	notifCard.ZIndex = 201
+	Instance.new("UICorner", notifCard).CornerRadius = UDim.new(0,16)
+	local accentBar = Instance.new("Frame", notifCard)
+	accentBar.Size = UDim2.new(0,4,0,36); accentBar.Position = UDim2.new(0,14,0.5,-18)
+	accentBar.BackgroundColor3 = Color3.fromRGB(180,20,20); accentBar.BorderSizePixel = 0; accentBar.ZIndex = 202
+	Instance.new("UICorner", accentBar).CornerRadius = UDim.new(1,0)
+	local notifText = Instance.new("TextLabel", notifCard)
+	notifText.Size = UDim2.new(1,-64,0,24); notifText.Position = UDim2.new(0,26,0.5,-12)
+	notifText.BackgroundTransparency = 1; notifText.Text = texto or "LINK COPIED"
+	notifText.TextColor3 = Color3.fromRGB(240,240,240); notifText.Font = Enum.Font.GothamBold
+	notifText.TextSize = 15; notifText.ZIndex = 203
 
 	table.insert(ActiveNotifications, 1, notifHolder)
 	UpdateNotifications()
-
 	TweenService:Create(notifHolder, TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-		Position = UDim2.new(1, -20, 1, -24)
+		Position = UDim2.new(1,-20,1,-24)
 	}):Play()
-
 	local dismissed = false
 	local function DismissNotif()
-		if dismissed then return end
-		dismissed = true
-		for i, v in ipairs(ActiveNotifications) do
-			if v == notifHolder then table.remove(ActiveNotifications, i) break end
-		end
+		if dismissed then return end; dismissed = true
+		for i,v in ipairs(ActiveNotifications) do if v==notifHolder then table.remove(ActiveNotifications,i) break end end
 		UpdateNotifications()
-		local slideOut = TweenInfo.new(0.25, Enum.EasingStyle.Cubic, Enum.EasingDirection.In)
-		TweenService:Create(notifHolder, slideOut, {
-			Position = UDim2.new(1, 360, notifHolder.Position.Y.Scale, notifHolder.Position.Y.Offset)
+		TweenService:Create(notifHolder, TweenInfo.new(0.25, Enum.EasingStyle.Cubic, Enum.EasingDirection.In), {
+			Position = UDim2.new(1,360,notifHolder.Position.Y.Scale,notifHolder.Position.Y.Offset)
 		}):Play()
-		TweenService:Create(notifCard, slideOut, {BackgroundTransparency = 1}):Play()
-		task.delay(0.28, function()
-			if notifHolder and notifHolder.Parent then notifHolder:Destroy() end
-		end)
+		task.delay(0.28, function() if notifHolder and notifHolder.Parent then notifHolder:Destroy() end end)
 	end
-
-	notifCloseBtn.MouseButton1Click:Connect(function() DismissNotif() end)
-	local barTween = TweenService:Create(progressBar, TweenInfo.new(NOTIF_DURATION, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 1, 0)})
-	task.delay(0.1, function() barTween:Play() end)
-	task.delay(NOTIF_DURATION + 0.1, function() DismissNotif() end)
+	task.delay(NOTIF_DURATION, DismissNotif)
 end
 
--- ==================== NOTIFICAÇÃO DISCORD ====================
 local function CriarNotificacaoDiscord()
-	local notifHolder              = Instance.new("Frame", screenGui)
-	notifHolder.Name               = "NotifHolderDiscord"
-	notifHolder.AnchorPoint        = Vector2.new(1, 1)
-	notifHolder.Size               = UDim2.new(0, 330, 0, 96)
-	notifHolder.Position           = UDim2.new(1, 360, 1, -24)
+	local notifHolder = Instance.new("Frame", screenGui)
+	notifHolder.Name = "NotifHolderDiscord"
+	notifHolder.AnchorPoint = Vector2.new(1, 1)
+	notifHolder.Size = UDim2.new(0, 330, 0, 96)
+	notifHolder.Position = UDim2.new(1, 360, 1, -24)
 	notifHolder.BackgroundTransparency = 1
-	notifHolder.ZIndex             = 200
-	notifHolder.ClipsDescendants   = false
-
-	local notifCard                = Instance.new("Frame", notifHolder)
-	notifCard.Name                 = "NotifCard"
-	notifCard.Size                 = UDim2.new(1, 0, 1, 0)
-	notifCard.BackgroundColor3     = Color3.fromRGB(16, 16, 18)
+	notifHolder.ZIndex = 200
+	local notifCard = Instance.new("Frame", notifHolder)
+	notifCard.Size = UDim2.new(1,0,1,0)
+	notifCard.BackgroundColor3 = Color3.fromRGB(16,16,18)
 	notifCard.BackgroundTransparency = 0.25
-	notifCard.BorderSizePixel      = 0
-	notifCard.ZIndex               = 201
-	notifCard.ClipsDescendants     = false
-	Instance.new("UICorner", notifCard).CornerRadius = UDim.new(0, 16)
-
-	local notifShadow              = Instance.new("ImageLabel", notifCard)
-	notifShadow.Name               = "Shadow"
-	notifShadow.AnchorPoint        = Vector2.new(0.5, 0.5)
-	notifShadow.Position           = UDim2.new(0.5, 0, 0.5, 4)
-	notifShadow.Size               = UDim2.new(1, 24, 1, 24)
-	notifShadow.BackgroundTransparency = 1
-	notifShadow.Image              = "rbxassetid://5554831957"
-	notifShadow.ImageColor3        = Color3.fromRGB(0, 0, 0)
-	notifShadow.ImageTransparency  = 0.35
-	notifShadow.ScaleType          = Enum.ScaleType.Slice
-	notifShadow.SliceCenter        = Rect.new(36, 36, 114, 114)
-	notifShadow.ZIndex             = 200
-
-	local accentBar                = Instance.new("Frame", notifCard)
-	accentBar.Size                 = UDim2.new(0, 4, 0, 52)
-	accentBar.Position             = UDim2.new(0, 14, 0.5, -26)
-	accentBar.BackgroundColor3     = Color3.fromRGB(88, 101, 242)
-	accentBar.BorderSizePixel      = 0
-	accentBar.ZIndex               = 202
-	Instance.new("UICorner", accentBar).CornerRadius = UDim.new(1, 0)
-
-	local notifTitle               = Instance.new("TextLabel", notifCard)
-	notifTitle.Size                = UDim2.new(1, -76, 0, 18)
-	notifTitle.Position            = UDim2.new(0, 26, 0.5, -19)
-	notifTitle.BackgroundTransparency = 1
-	notifTitle.Text                = "DISCORD SERVER"
-	notifTitle.TextColor3          = Color3.fromRGB(240, 240, 240)
-	notifTitle.Font                = Enum.Font.GothamBold
-	notifTitle.TextSize            = 16
-	notifTitle.TextXAlignment      = Enum.TextXAlignment.Left
-	notifTitle.ZIndex              = 203
-
-	local notifDesc                = Instance.new("TextLabel", notifCard)
-	notifDesc.Size                 = UDim2.new(1, -100, 0, 18)
-	notifDesc.Position             = UDim2.new(0, 26, 0.5, 1)
-	notifDesc.BackgroundTransparency = 1
-	notifDesc.Text                 = "https://discord.gg/rZuYzZ7zvt"
-	notifDesc.TextColor3           = Color3.fromRGB(150, 150, 155)
-	notifDesc.Font                 = Enum.Font.Gotham
-	notifDesc.TextSize             = 12
-	notifDesc.TextXAlignment       = Enum.TextXAlignment.Left
-	notifDesc.TextYAlignment       = Enum.TextYAlignment.Top
-	notifDesc.TextWrapped          = true
-	notifDesc.ZIndex               = 203
-
-	local copyBtn                  = Instance.new("TextButton", notifCard)
-	copyBtn.Size                   = UDim2.new(0, 70, 0, 24)
-	copyBtn.AnchorPoint            = Vector2.new(1, 1)
-	copyBtn.Position               = UDim2.new(1, -14, 1, -14)
-	copyBtn.BackgroundColor3       = Color3.fromRGB(88, 101, 242)
-	copyBtn.Text                   = "COPY"
-	copyBtn.TextColor3             = Color3.fromRGB(255, 255, 255)
-	copyBtn.Font                   = Enum.Font.GothamBold
-	copyBtn.TextSize               = 12
-	copyBtn.ZIndex                 = 205
-	copyBtn.BorderSizePixel        = 0
-	Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 6)
-
+	notifCard.BorderSizePixel = 0
+	notifCard.ZIndex = 201
+	Instance.new("UICorner", notifCard).CornerRadius = UDim.new(0,16)
+	local accentBar = Instance.new("Frame", notifCard)
+	accentBar.Size = UDim2.new(0,4,0,52); accentBar.Position = UDim2.new(0,14,0.5,-26)
+	accentBar.BackgroundColor3 = Color3.fromRGB(88,101,242); accentBar.BorderSizePixel = 0; accentBar.ZIndex = 202
+	Instance.new("UICorner", accentBar).CornerRadius = UDim.new(1,0)
+	local notifTitle = Instance.new("TextLabel", notifCard)
+	notifTitle.Size = UDim2.new(1,-76,0,18); notifTitle.Position = UDim2.new(0,26,0.5,-19)
+	notifTitle.BackgroundTransparency = 1; notifTitle.Text = "DISCORD SERVER"
+	notifTitle.TextColor3 = Color3.fromRGB(240,240,240); notifTitle.Font = Enum.Font.GothamBold
+	notifTitle.TextSize = 16; notifTitle.ZIndex = 203
+	local notifDesc = Instance.new("TextLabel", notifCard)
+	notifDesc.Size = UDim2.new(1,-100,0,18); notifDesc.Position = UDim2.new(0,26,0.5,1)
+	notifDesc.BackgroundTransparency = 1; notifDesc.Text = "https://discord.gg/rZuYzZ7zvt"
+	notifDesc.TextColor3 = Color3.fromRGB(150,150,155); notifDesc.Font = Enum.Font.Gotham
+	notifDesc.TextSize = 12; notifDesc.ZIndex = 203
+	local copyBtn = Instance.new("TextButton", notifCard)
+	copyBtn.Size = UDim2.new(0,70,0,24); copyBtn.AnchorPoint = Vector2.new(1,1)
+	copyBtn.Position = UDim2.new(1,-14,1,-14); copyBtn.BackgroundColor3 = Color3.fromRGB(88,101,242)
+	copyBtn.Text = "COPY"; copyBtn.TextColor3 = Color3.fromRGB(255,255,255)
+	copyBtn.Font = Enum.Font.GothamBold; copyBtn.TextSize = 12; copyBtn.ZIndex = 205
+	copyBtn.BorderSizePixel = 0
+	Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0,6)
 	copyBtn.MouseButton1Click:Connect(function()
 		PlayUI_Click()
-		local success = false
-		if setclipboard then
-			local ok = pcall(function()
-				setclipboard("https://discord.gg/rZuYzZ7zvt")
-			end)
-			success = ok
-		end
-		if success then
-			CriarNotificacaoLinkCopiado("LINK COPIED SUCCESSFULLY!", "rbxthumb://type=Asset&id=118293546444074&w=150&h=150")
-		end
+		pcall(function() if setclipboard then setclipboard("https://discord.gg/rZuYzZ7zvt") end end)
+		CriarNotificacaoLinkCopiado("LINK COPIED SUCCESSFULLY!")
 	end)
 
-	local notifCloseBtn            = Instance.new("TextButton", notifCard)
-	notifCloseBtn.Size             = UDim2.new(0, 24, 0, 24)
-	notifCloseBtn.Position         = UDim2.new(1, -32, 0, 10)
-	notifCloseBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 38)
-	notifCloseBtn.BackgroundTransparency = 0.2
-	notifCloseBtn.Text             = ""
-	notifCloseBtn.ZIndex           = 205
-	notifCloseBtn.BorderSizePixel  = 0
-	Instance.new("UICorner", notifCloseBtn).CornerRadius = UDim.new(0, 6)
-	local xStroke                  = Instance.new("UIStroke", notifCloseBtn)
-	xStroke.Color                  = Color3.fromRGB(80, 80, 85)
-	xStroke.Thickness              = 1
-	xStroke.Transparency           = 0.5
-	local xL1                      = Instance.new("Frame", notifCloseBtn)
-	xL1.AnchorPoint                = Vector2.new(0.5, 0.5)
-	xL1.Position                   = UDim2.new(0.5, 0, 0.5, 0)
-	xL1.Size                       = UDim2.new(0, 10, 0, 1.5)
-	xL1.Rotation                   = 45
-	xL1.BackgroundColor3           = Color3.fromRGB(160, 160, 165)
-	xL1.BorderSizePixel            = 0
-	xL1.ZIndex                     = 206
-	Instance.new("UICorner", xL1).CornerRadius = UDim.new(1, 0)
-	local xL2                      = Instance.new("Frame", notifCloseBtn)
-	xL2.AnchorPoint                = Vector2.new(0.5, 0.5)
-	xL2.Position                   = UDim2.new(0.5, 0, 0.5, 0)
-	xL2.Size                       = UDim2.new(0, 10, 0, 1.5)
-	xL2.Rotation                   = -45
-	xL2.BackgroundColor3           = Color3.fromRGB(160, 160, 165)
-	xL2.BorderSizePixel            = 0
-	xL2.ZIndex                     = 206
-	Instance.new("UICorner", xL2).CornerRadius = UDim.new(1, 0)
+	local notifCloseBtn = Instance.new("TextButton", notifCard)
+	notifCloseBtn.Size = UDim2.new(0,24,0,24); notifCloseBtn.Position = UDim2.new(1,-32,0,10)
+	notifCloseBtn.BackgroundColor3 = Color3.fromRGB(35,35,38); notifCloseBtn.BackgroundTransparency = 0.2
+	notifCloseBtn.Text = ""; notifCloseBtn.ZIndex = 205; notifCloseBtn.BorderSizePixel = 0
+	Instance.new("UICorner", notifCloseBtn).CornerRadius = UDim.new(0,6)
 
-	notifCloseBtn.MouseEnter:Connect(function()
-		TweenService:Create(notifCloseBtn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(160, 20, 20)}):Play()
-		TweenService:Create(xL1, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-		TweenService:Create(xL2, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-	end)
-	notifCloseBtn.MouseLeave:Connect(function()
-		TweenService:Create(notifCloseBtn, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(35, 35, 38)}):Play()
-		TweenService:Create(xL1, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(160, 160, 165)}):Play()
-		TweenService:Create(xL2, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(160, 160, 165)}):Play()
-	end)
-
-	local progressBg               = Instance.new("Frame", notifCard)
-	progressBg.Size                = UDim2.new(1, -28, 0, 3)
-	progressBg.Position            = UDim2.new(0, 14, 1, -10)
-	progressBg.BackgroundColor3    = Color3.fromRGB(30, 30, 35)
-	progressBg.BorderSizePixel     = 0
-	progressBg.ZIndex              = 202
-	progressBg.ClipsDescendants    = true
-	Instance.new("UICorner", progressBg).CornerRadius = UDim.new(1, 0)
-	local progressBar              = Instance.new("Frame", progressBg)
-	progressBar.Size               = UDim2.new(1, 0, 1, 0)
-	progressBar.Position           = UDim2.new(0, 0, 0, 0)
-	progressBar.BackgroundColor3   = Color3.fromRGB(255, 255, 255)
-	progressBar.BorderSizePixel    = 0
-	progressBar.ZIndex             = 203
-	Instance.new("UICorner", progressBar).CornerRadius = UDim.new(1, 0)
-	local progressGrad             = Instance.new("UIGradient", progressBar)
-	progressGrad.Color             = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(88, 101, 242)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 30, 100))
+	local progressBg = Instance.new("Frame", notifCard)
+	progressBg.Size = UDim2.new(1,-28,0,3); progressBg.Position = UDim2.new(0,14,1,-10)
+	progressBg.BackgroundColor3 = Color3.fromRGB(30,30,35); progressBg.BorderSizePixel = 0
+	progressBg.ZIndex = 202; progressBg.ClipsDescendants = true
+	Instance.new("UICorner", progressBg).CornerRadius = UDim.new(1,0)
+	local progressBar = Instance.new("Frame", progressBg)
+	progressBar.Size = UDim2.new(1,0,1,0); progressBar.BackgroundColor3 = Color3.fromRGB(255,255,255)
+	progressBar.BorderSizePixel = 0; progressBar.ZIndex = 203
+	Instance.new("UICorner", progressBar).CornerRadius = UDim.new(1,0)
+	local progressGrad = Instance.new("UIGradient", progressBar)
+	progressGrad.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(88,101,242)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(20,30,100))
 	})
 
 	table.insert(ActiveNotifications, 1, notifHolder)
 	UpdateNotifications()
-
 	TweenService:Create(notifHolder, TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-		Position = UDim2.new(1, -20, 1, -24)
+		Position = UDim2.new(1,-20,1,-24)
 	}):Play()
 
 	local dismissed = false
 	local function DismissNotif()
-		if dismissed then return end
-		dismissed = true
-		for i, v in ipairs(ActiveNotifications) do
-			if v == notifHolder then table.remove(ActiveNotifications, i) break end
-		end
+		if dismissed then return end; dismissed = true
+		for i,v in ipairs(ActiveNotifications) do if v==notifHolder then table.remove(ActiveNotifications,i) break end end
 		UpdateNotifications()
 		local slideOut = TweenInfo.new(0.25, Enum.EasingStyle.Cubic, Enum.EasingDirection.In)
 		TweenService:Create(notifHolder, slideOut, {
-			Position = UDim2.new(1, 360, notifHolder.Position.Y.Scale, notifHolder.Position.Y.Offset)
+			Position = UDim2.new(1,360,notifHolder.Position.Y.Scale,notifHolder.Position.Y.Offset)
 		}):Play()
 		TweenService:Create(notifCard, slideOut, {BackgroundTransparency = 1}):Play()
-		task.delay(0.28, function()
-			if notifHolder and notifHolder.Parent then notifHolder:Destroy() end
-		end)
+		task.delay(0.28, function() if notifHolder and notifHolder.Parent then notifHolder:Destroy() end end)
 	end
 
-	notifCloseBtn.MouseButton1Click:Connect(function() DismissNotif() end)
-	local barTween = TweenService:Create(progressBar, TweenInfo.new(NOTIF_DURATION, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 1, 0)})
+	notifCloseBtn.MouseButton1Click:Connect(DismissNotif)
+	local barTween = TweenService:Create(progressBar, TweenInfo.new(NOTIF_DURATION, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Size = UDim2.new(0,0,1,0)})
 	task.delay(0.1, function() barTween:Play() end)
-	task.delay(NOTIF_DURATION + 0.1, function() DismissNotif() end)
+	task.delay(NOTIF_DURATION + 0.1, DismissNotif)
 end
 
 -- ==================== FILTRO / PESQUISA ====================
@@ -1450,7 +1214,7 @@ local function UpdateActiveBarPosition(animar)
 
 		local btnAbsSize = targetBtn.AbsoluteSize.Y
 		local btnAbsPos  = targetBtn.AbsolutePosition.Y
-		local panelAbsY  = ActiveBarContainer.AbsolutePosition.Y -- Agora pegando a posição relativa ao Container!
+		local panelAbsY  = ActiveBarContainer.AbsolutePosition.Y
 
 		if (btnAbsSize == 0 or btnAbsPos == 0 or panelAbsY == 0) and deferCount < MAX_DEFER then
 			task.defer(aplicar)
@@ -1559,7 +1323,7 @@ local function createTabBtn(tabName)
 	tabButtons[tabName] = tabBtn
 end
 
--- ==================== CRIAR TOGGLE ====================
+-- ==================== CRIAR TOGGLE (CORRIGIDO — DISPARA CALLBACK) ====================
 local function createToggle(parent, configKey, tabCategory)
 	local toggleFrame              = Instance.new("Frame")
 	toggleFrame.Name               = configKey
@@ -1623,23 +1387,37 @@ local function createToggle(parent, configKey, tabCategory)
 	triggerBtn.Text                = ""
 	triggerBtn.ZIndex              = 13
 
+	-- *** AQUI ESTÁ A CORREÇÃO PRINCIPAL ***
+	-- Além de atualizar a UI local, agora dispara o callback para o script de lógica
 	triggerBtn.MouseButton1Click:Connect(function()
 		PlayUI_Click()
 		Configs[configKey] = not Configs[configKey]
-		local targetPos   = Configs[configKey] and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
-		local targetColor = Configs[configKey] and Color3.fromHex("#8B0000") or Color3.fromRGB(30, 30, 30)
+		local newValue    = Configs[configKey]
+
+		-- Atualiza visual do switch
+		local targetPos   = newValue and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
+		local targetColor = newValue and Color3.fromHex("#8B0000") or Color3.fromRGB(30, 30, 30)
 		local anim        = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		TweenService:Create(switchCircle, anim, {Position = targetPos}):Play()
 		TweenService:Create(switchTrack,  anim, {BackgroundColor3 = targetColor}):Play()
 		toggleScale.Scale = 0.96
 		TweenService:Create(toggleScale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = 1}):Play()
+
+		-- Sincroniza com getgenv para o script de lógica poder ler também
+		if getgenv then
+			local genv = getgenv()
+			if genv.AkatConfigs then
+				genv.AkatConfigs[configKey] = newValue
+			end
+		end
+
+		-- Chama o callback correspondente no script de lógica
+		FireCallback(configKey, newValue)
 	end)
 end
 
 searchTextBox:GetPropertyChangedSignal("Text"):Connect(function()
-	if filterDebounceThread then
-		task.cancel(filterDebounceThread)
-	end
+	if filterDebounceThread then task.cancel(filterDebounceThread) end
 	filterDebounceThread = task.delay(0.08, function()
 		filterDebounceThread = nil
 		filterToggles(activeTab, searchTextBox.Text)
@@ -1671,7 +1449,6 @@ SetUIState = function(newState)
 		mainWrapper.Size    = UDim2.new(0, 480, 0, 260)
 		AplicarFadeSincronizado(mainWrapper, true, 0)
 		AplicarFadeSincronizado(mainWrapper, false, tempoAnim)
-
 		local targetSize = isExpanded and UDim2.new(0, 800, 0, 480) or UDim2.new(0, 640, 0, 360)
 		local openTween  = TweenService:Create(mainWrapper, windowAnim, {Size = targetSize})
 		openTween:Play()
@@ -1697,7 +1474,7 @@ SetUIState = function(newState)
 	end
 end
 
--- ==================== FLASH DE CLIQUE NOS BOTÕES DO TOPO ====================
+-- ==================== FLASH E HOVER DOS BOTÕES ====================
 local function AplicarClickFlash(btn, icon)
 	btn.MouseButton1Click:Connect(function()
 		local flashInfo = TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, true, 0)
@@ -1710,7 +1487,6 @@ MinimizeBtn.MouseButton1Click:Connect(function()
 	SetUIState("MINIMIZED")
 end)
 
--- ==================== CONFIRMAÇÃO DE FECHAMENTO ====================
 local function AlternarConfirmacao(exibir)
 	isConfirmOpen = exibir
 	local tempoAnim = 0.25
@@ -1719,33 +1495,25 @@ local function AlternarConfirmacao(exibir)
 		mainWrapper.Visible  = false
 		FloatBtn.Visible     = false
 		confirmOverlay.Visible = true
-
 		TweenService:Create(confirmBlur, TweenInfo.new(tempoAnim, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 28}):Play()
-
 		local oldScale = confirmCard:FindFirstChildOfClass("UIScale")
 		if oldScale then oldScale:Destroy() end
-
 		confirmCard.Size = UDim2.new(0, 280, 0, 115)
 		local cardScale  = Instance.new("UIScale", confirmCard)
 		cardScale.Scale  = 0.88
 		TweenService:Create(cardScale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
 		AplicarFadeSincronizado(confirmCard, false, tempoAnim)
-
 	else
 		TweenService:Create(confirmBlur, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = 0}):Play()
 		AplicarFadeSincronizado(confirmCard, true, tempoAnim)
 		local sc = confirmCard:FindFirstChildOfClass("UIScale")
-		if sc then
-			TweenService:Create(sc, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Scale = 0.88}):Play()
-		end
+		if sc then TweenService:Create(sc, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Scale = 0.88}):Play() end
 		task.delay(tempoAnim + 0.05, function()
 			if not isConfirmOpen then
 				confirmOverlay.Visible = false
 				local sc2 = confirmCard:FindFirstChildOfClass("UIScale")
 				if sc2 then sc2:Destroy() end
-				if UIState == "OPEN" then
-					mainWrapper.Visible = true
-				end
+				if UIState == "OPEN" then mainWrapper.Visible = true end
 				FloatBtn.Visible = true
 			end
 		end)
@@ -1760,6 +1528,11 @@ end)
 btnNo.MouseButton1Click:Connect(function() AlternarConfirmacao(false) end)
 
 btnYes.MouseButton1Click:Connect(function()
+	-- Desliga tudo na lógica antes de destruir a UI
+	local callbacks = (getgenv and getgenv().AkatCallbacks) or _G.AkatCallbacks
+	if callbacks and type(callbacks.ShutdownAll) == "function" then
+		pcall(callbacks.ShutdownAll)
+	end
 	local syncTime = 0.2
 	TweenService:Create(confirmBlur, TweenInfo.new(syncTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = 0}):Play()
 	AplicarFadeSincronizado(confirmCard, true, syncTime)
@@ -1768,7 +1541,6 @@ btnYes.MouseButton1Click:Connect(function()
 	screenGui:Destroy()
 end)
 
--- ==================== HOVER NOS BOTÕES DO TOPO ====================
 local function AplicarEfeitoFisicoBotao(btn, icon, hoverColor)
 	btn.MouseEnter:Connect(function()
 		if UIState ~= "OPEN" then return end
@@ -1783,19 +1555,17 @@ end
 AplicarEfeitoFisicoBotao(MinimizeBtn, MinimizeIcon, Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(ExpandBtn,   ExpandIcon,   Color3.fromRGB(255, 255, 255))
 AplicarEfeitoFisicoBotao(CloseBtn,    CloseIcon,    Color3.fromRGB(255, 60,  60))
-
 AplicarClickFlash(MinimizeBtn, MinimizeIcon)
 AplicarClickFlash(ExpandBtn,   ExpandIcon)
 AplicarClickFlash(CloseBtn,    CloseIcon)
 
--- ==================== CRIAR ABAS ====================
+-- ==================== CRIAR ABAS E TOGGLES ====================
 createTabBtn("Player")
 createTabBtn("Combat")
 createTabBtn("Visuals")
 createTabBtn("Teleports")
 createTabBtn("Settings")
 
--- ==================== CRIAR TOGGLES ====================
 createToggle(togglesContainer, "Speed",       "Player")
 createToggle(togglesContainer, "AntiFling",   "Player")
 createToggle(togglesContainer, "Aimbot",      "Combat")
@@ -1898,21 +1668,28 @@ local function ExecutarIntroAkat()
 	end)
 end
 
-ExecutarIntroAkat()
-
--- ==================== EXECUÇÃO DA LÓGICA EXTERNA ====================
-
--- 1. Expõe a tabela de configurações globalmente para que o script do link raw possa lê-la:
-getgenv().AkatConfigs = Configs
-
--- 2. Carrega e executa o seu script externo por um link raw:
+-- ==================== CARREGA LÓGICA EXTERNA E INICIA ====================
+-- O script de lógica (main.lua) é carregado PRIMEIRO para registrar _G.AkatCallbacks
+-- antes de a UI terminar de construir os callbacks.
 local rawLink = "https://raw.githubusercontent.com/estratosfera88-afk/MM2-SCRIPT-/refs/heads/main/main.lua"
 
--- Tenta carregar o script de forma segura usando pcall
-local success, result = pcall(function()
-    loadstring(game:HttpGet(rawLink))()
+local ok, err = pcall(function()
+	loadstring(game:HttpGet(rawLink, true))()
 end)
 
-if not success then
-    warn("Falha ao executar o script raw: ", result)
+if not ok then
+	warn("[AKATSUKI] Falha ao carregar main.lua: " .. tostring(err))
 end
+
+-- Aguarda até 3 s para o script de lógica registrar seus callbacks
+task.spawn(function()
+	local waited = 0
+	while waited < 3 do
+		local callbacks = (getgenv and getgenv().AkatCallbacks) or _G.AkatCallbacks
+		if callbacks then break end
+		task.wait(0.1)
+		waited = waited + 0.1
+	end
+	-- Agora sim executa a intro e abre a UI
+	ExecutarIntroAkat()
+end)
