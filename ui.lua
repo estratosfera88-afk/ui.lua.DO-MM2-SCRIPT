@@ -19,7 +19,12 @@ local Configs = {
 	TpToGun     = false,
 	SafeSpot    = false,
 	AutoCollect = false,
-	ChatRoles   = false
+	ChatRoles   = false,
+	KnifeThrow  = false,
+	XRay        = false,
+	AutoDodge   = false,
+	KillAll     = false,
+	Invisibility= false
 }
 
 -- ==================== DYNAMIC UI COMPONENT & STATE MACHINE ====================
@@ -32,7 +37,7 @@ local UI_TEXT = {
 	CancelBtn         = "No",
 	Intro             = '<font color="#FFFFFF">Scripts by | </font><font color="#8B0000">AKATSUKI</font>',
 	Tabs              = { Player = "Player", Combat = "Combat", Visuals = "Visuals", Teleports = "Teleports", Settings = "Settings" },
-	Options           = {
+		Options           = {
 		Aimbot      = { Title = "Aimbot Murderer",  Desc = "Automatic aimbot that stays in the murderer's head non-stop." },
 		Reach       = { Title = "Knife Reach",       Desc = "Significantly increases your knife attack reach (18 studs)." },
 		ESP         = { Title = "Player ESP",        Desc = "Highlights players through walls (Sheriff Blue / Hero Yellow)." },
@@ -41,9 +46,13 @@ local UI_TEXT = {
 		TpToGun     = { Title = "TP to Gun",         Desc = "Teleports to dropped gun (Automatically disabled for the Murderer)." },
 		SafeSpot    = { Title = "Safe Spot",         Desc = "Teleports you to an invisible sky platform to remain completely safe." },
 		AutoCollect = { Title = "Auto Collect",      Desc = "Smoothly collects coins continuously without clunky visual stops." },
-		ChatRoles   = { Title = "Reveal Roles",      Desc = "Sends a message in chat revealing active roles." }
+		ChatRoles   = { Title = "Reveal Roles",      Desc = "Sends a message in chat revealing active roles." },
+		KnifeThrow  = { Title = "Knife Throw",     Desc = "Automatically throws the knife with precision." },
+		XRay        = { Title = "X-Ray",           Desc = "Full vision through objects and terrain." },
+		AutoDodge   = { Title = "Auto Dodge Knife", Desc = "Automatically dodges thrown knives (Tween/Teleport)." },
+		KillAll     = { Title = "Kill All",        Desc = "Eliminates all players at once (if you are the Killer)." },
+		Invisibility= { Title = "Invisibility",    Desc = "Makes your character invisible to other players." }
 	}
-}
 
 local activeTab     = "Player"
 local tabButtons    = {}
@@ -1809,15 +1818,24 @@ createTabBtn("Teleports")
 createTabBtn("Settings")
 
 -- ==================== CRIAR TOGGLES ====================
-createToggle(togglesContainer, "Speed",       "Player")
-createToggle(togglesContainer, "AntiFling",   "Player")
-createToggle(togglesContainer, "Aimbot",      "Combat")
-createToggle(togglesContainer, "Reach",       "Combat")
-createToggle(togglesContainer, "ESP",         "Visuals")
-createToggle(togglesContainer, "TpToGun",     "Teleports")
-createToggle(togglesContainer, "SafeSpot",    "Teleports")
-createToggle(togglesContainer, "AutoCollect", "Settings")
-createToggle(togglesContainer, "ChatRoles",   "Settings")
+createToggle(togglesContainer, "Speed",        "Player")
+createToggle(togglesContainer, "AntiFling",    "Player")
+createToggle(togglesContainer, "Invisibility", "Player")
+
+createToggle(togglesContainer, "Aimbot",       "Combat")
+createToggle(togglesContainer, "Reach",        "Combat")
+createToggle(togglesContainer, "KnifeThrow",   "Combat")
+createToggle(togglesContainer, "AutoDodge",    "Combat")
+createToggle(togglesContainer, "KillAll",      "Combat")
+
+createToggle(togglesContainer, "ESP",          "Visuals")
+createToggle(togglesContainer, "XRay",         "Visuals")
+
+createToggle(togglesContainer, "TpToGun",      "Teleports")
+createToggle(togglesContainer, "SafeSpot",     "Teleports")
+
+createToggle(togglesContainer, "AutoCollect",  "Settings")
+createToggle(togglesContainer, "ChatRoles",    "Settings")
 
 -- ==================== ANIMAÇÃO DE INTRODUÇÃO ====================
 local function ExecutarIntroAkat()
