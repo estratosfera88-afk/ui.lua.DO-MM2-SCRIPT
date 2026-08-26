@@ -1899,16 +1899,3 @@ local function ExecutarIntroAkat()
 end
 
 ExecutarIntroAkat()
-
--- ==================== EXECUÇÃO DA LÓGICA EXTERNA ====================
-
--- 1. Expõe a tabela de configurações globalmente para que o script do link raw possa lê-la:
-getgenv().AkatConfigs = Configs
-
--- 2. Carrega e executa o seu script externo por um link raw:
-local rawLink = "https://raw.githubusercontent.com/estratosfera88-afk/MM2-SCRIPT-/refs/heads/main/main.lua"
-
--- Carrega e executa o script em uma nova thread (evita travamentos na UI)
-task.spawn(function()
-    loadstring(game:HttpGet(rawLink))()
-end)
