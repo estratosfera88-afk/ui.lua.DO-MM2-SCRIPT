@@ -1633,6 +1633,19 @@ local function createToggle(parent, configKey, tabCategory)
 		TweenService:Create(switchTrack,  anim, {BackgroundColor3 = targetColor}):Play()
 		toggleScale.Scale = 0.96
 		TweenService:Create(toggleScale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = 1}):Play()
+
+		-- ==================== INTEGRAÇÃO COM BACKEND ====================
+		if _G.AkatCallbacks and type(_G.AkatCallbacks[configKey]) == "function" then
+			local success, err = pcall(function()
+				_G.AkatCallbacks[configKey](Configs[configKey])
+			end)
+			if not success then
+				warn("[AKAT UI] Callback failed for " .. tostring(configKey) .. ": " .. tostring(err))
+			end
+		else
+			warn("[AKAT UI] Callback not found: " .. tostring(configKey))
+		end
+		-- ==================== FIM DA INTEGRAÇÃO ====================
 	end)
 end
 
