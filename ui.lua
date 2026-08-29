@@ -1,4 +1,4 @@
--- [[ AKATSUKI UI ONLY [v5.7.2] - REFINED UNIFIED EDITION — FIXED BUILD ]]
+-- [[ AKATSUKI UI ONLY [v5.9 - PLAYER SLIDERS / FLOATING SAFE AREA] - REFINED UNIFIED EDITION — FIXED BUILD ]]
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -9,39 +9,66 @@ local ContentProvider = game:GetService("ContentProvider")
 
 local player = Players.LocalPlayer
 
+-- Limpa uma instância anterior da UI para evitar conexões e objetos duplicados.
+if _G.AkatUIShutdown then
+	pcall(_G.AkatUIShutdown)
+end
+
 -- ==================== ESTADO DOS TOGGLES DA UI ====================
 local Configs = {
 	ESP         = false,
-	Aimbot      = false,
+	AutoShoot   = false,
 	Speed       = false,
+	SpeedValue  = 16,
+	JumpPower   = false,
+	JumpPowerValue = 50,
 	Reach       = false,
 	AntiFling   = false,
 	TpToGun     = false,
+	TpMurder    = false,
+	TpSheriff   = false,
 	SafeSpot    = false,
-	AutoCollect = false,
-	ChatRoles   = false
+	AutoFarm    = false,
+	ChatRoles   = false,
+	XRay        = false,
+	KillAll     = false,
+	Invisibility= false,
+	ViewReach   = false,
+	Name        = false,
+	Tracer      = false,
+	TpLobby     = false,
 }
 
 -- ==================== DYNAMIC UI COMPONENT & STATE MACHINE ====================
 local UIState = "CLOSED"
 
 local UI_TEXT = {
-	SearchPlaceholder = "Search...",
-	ConfirmCloseTitle = "Do you want to close the script?",
-	ConfirmBtn        = "Yes",
-	CancelBtn         = "No",
+	SearchPlaceholder = "Pesquisar...",
+	ConfirmCloseTitle = "Deseja fechar o script?",
+	ConfirmBtn        = "Sim",
+	CancelBtn         = "Não",
 	Intro             = '<font color="#FFFFFF">Scripts by | </font><font color="#8B0000">AKATSUKI</font>',
 	Tabs              = { Player = "Player", Combat = "Combat", Visuals = "Visuals", Teleports = "Teleports", Settings = "Settings" },
 	Options           = {
-		Aimbot      = { Title = "Aimbot Murderer",  Desc = "Automatic aimbot that stays in the murderer's head non-stop." },
-		Reach       = { Title = "Knife Reach",       Desc = "Significantly increases your knife attack reach (18 studs)." },
-		ESP         = { Title = "Player ESP",        Desc = "Highlights players through walls (Sheriff Blue / Hero Yellow)." },
-		Speed       = { Title = "WalkSpeed",         Desc = "Slightly increases player walkspeed up to 23 smoothly." },
-		AntiFling   = { Title = "Anti-Fling",        Desc = "Disables collisions to prevent other players from flinging you." },
-		TpToGun     = { Title = "TP to Gun",         Desc = "Teleports to dropped gun (Automatically disabled for the Murderer)." },
-		SafeSpot    = { Title = "Safe Spot",         Desc = "Teleports you to an invisible sky platform to remain completely safe." },
-		AutoCollect = { Title = "Auto Collect",      Desc = "Smoothly collects coins continuously without clunky visual stops." },
-		ChatRoles   = { Title = "Reveal Roles",      Desc = "Sends a message in chat revealing active roles." }
+		AutoShoot    = { Title = "Auto Shoot",    Desc = "Equipa a arma automaticamente e atira no Assassino detectado usando Silent Aim." },
+		Reach        = { Title = "Knife Reach",   Desc = "Aumenta o alcance da faca para eliminar jogadores à distância." },
+		ESP          = { Title = "Player ESP",    Desc = "Destaca jogadores através das paredes (Assassino=Vermelho / Sheriff=Azul / Herói=Amarelo / Inocente=Verde)." },
+		Speed        = { Title = "Speed",         Desc = "Aumenta a velocidade de movimento do seu personagem." },
+		JumpPower    = { Title = "Jump",          Desc = "Aumenta a altura do pulo do seu personagem." },
+		AntiFling    = { Title = "Anti-Fling",    Desc = "Desativa colisões para evitar que outros jogadores te joguem para longe." },
+		TpToGun      = { Title = "TP Gun",        Desc = "Teleporta até a arma largada no chão (desativado automaticamente para o Assassino)." },
+		TpMurder     = { Title = "Tp Murder",     Desc = "Teleporta instantaneamente até o Assassino da rodada atual." },
+		TpSheriff    = { Title = "Tp Sheriff",    Desc = "Teleporta instantaneamente até o Sheriff da rodada atual." },
+		TpLobby      = { Title = "Tp Lobby",      Desc = "Teleporta você para o spawn do lobby quando disponível." },
+		SafeSpot     = { Title = "Safe Spot",     Desc = "Teleporta você para uma plataforma invisível no céu para ficar completamente seguro." },
+		AutoFarm     = { Title = "Auto Farm",     Desc = "Coleta moedas automaticamente de forma suave, sem travar ou prender seu personagem." },
+		ChatRoles    = { Title = "Reveal Roles",  Desc = "Envia uma mensagem no chat revelando os cargos ativos na rodada." },
+		XRay         = { Title = "X-Ray",         Desc = "Permite enxergar através de objetos e do terreno." },
+		KillAll      = { Title = "Kill All",      Desc = "Elimina todos os jogadores de uma vez (somente se você for o Assassino)." },
+		Invisibility = { Title = "Invisibility",  Desc = "Torna seu personagem invisível para os outros jogadores." },
+		ViewReach    = { Title = "View Reach",    Desc = "Mostra a área de alcance corpo a corpo ao redor dos jogadores, incluindo Inocentes." },
+		Name         = { Title = "Name ESP",      Desc = "Exibe os nomes dos jogadores acima dos personagens com a cor do cargo e atualiza a cada rodada." },
+		Tracer       = { Title = "Tracer ESP",    Desc = "Desenha uma linha até os outros jogadores com a cor do cargo e atualiza após cada rodada." },
 	}
 }
 
@@ -50,6 +77,66 @@ local tabButtons    = {}
 local isExpanded    = false
 local originalTrans = {}
 local isConfirmOpen = false
+
+-- ==================== DIMENSIONAMENTO RESPONSIVO ====================
+local NORMAL_UI_SIZE   = Vector2.new(565, 385)
+local EXPANDED_UI_SIZE = Vector2.new(905, 405)
+local UI_SAFE_MARGIN   = 14
+
+local function GetViewportSize()
+	local camera = workspace.CurrentCamera
+	if camera then
+		return camera.ViewportSize
+	end
+	return Vector2.new(1280, 720)
+end
+
+local FLOATING_BUTTON_SIZE = Vector2.new(150, 48)
+local FLOATING_GAP = 18
+
+local function ClampFloatingPosition(pos)
+	local vp = GetViewportSize()
+	local halfW, halfH = FLOATING_BUTTON_SIZE.X / 2, FLOATING_BUTTON_SIZE.Y / 2
+	local minX = halfW + 8
+	local maxX = vp.X - halfW - 8
+	local minY = halfH + 8
+	local maxY = vp.Y - halfH - 8
+
+	-- Zona reservada para o analógico virtual no canto inferior esquerdo.
+	if pos.X < 210 and pos.Y > vp.Y - 210 then
+		pos = Vector2.new(220, math.min(pos.Y, vp.Y - 230))
+	end
+
+	return Vector2.new(math.clamp(pos.X, minX, maxX), math.clamp(pos.Y, minY, maxY))
+end
+
+local function GetResponsiveUISizes()
+	local vp = GetViewportSize()
+	local maxW = math.max(1, vp.X - (UI_SAFE_MARGIN * 2))
+	local maxH = math.max(1, vp.Y - (UI_SAFE_MARGIN * 2))
+
+	local normalW = math.min(NORMAL_UI_SIZE.X, maxW)
+	local normalH = math.min(NORMAL_UI_SIZE.Y, maxH)
+	local expandedW = math.min(EXPANDED_UI_SIZE.X, maxW)
+	local expandedH = math.min(EXPANDED_UI_SIZE.Y, maxH)
+
+	return UDim2.fromOffset(normalW, normalH), UDim2.fromOffset(expandedW, expandedH)
+end
+
+local function ClampMainWrapperToViewport()
+	if not mainWrapper or not mainWrapper.Parent then return end
+
+	local vp = GetViewportSize()
+	local size = mainWrapper.AbsoluteSize
+	local halfW = math.min(size.X / 2, math.max(0, vp.X / 2 - UI_SAFE_MARGIN))
+	local halfH = math.min(size.Y / 2, math.max(0, vp.Y / 2 - UI_SAFE_MARGIN))
+
+	local pos = mainWrapper.AbsolutePosition + (size / 2)
+	local x = math.clamp(pos.X, halfW + UI_SAFE_MARGIN, vp.X - halfW - UI_SAFE_MARGIN)
+	local y = math.clamp(pos.Y, halfH + UI_SAFE_MARGIN, vp.Y - halfH - UI_SAFE_MARGIN)
+
+	mainWrapper.Position = UDim2.fromOffset(x, y)
+end
 
 -- ==================== SCREENGUI ====================
 local screenGui           = Instance.new("ScreenGui")
@@ -149,7 +236,7 @@ local FloatBtn = Instance.new("ImageButton", screenGui)
 FloatBtn.Name                = "FloatBtn"
 FloatBtn.AnchorPoint         = Vector2.new(0.5, 0.5)
 FloatBtn.Size                = UDim2.new(0, 44, 0, 44)
-FloatBtn.Position            = UDim2.new(0.12, 0, 0.4, 0)
+FloatBtn.Position         = UDim2.new(0.06, 0, 0.2, 0)
 FloatBtn.Image               = "rbxthumb://type=Asset&id=139044062702391&w=150&h=150"
 FloatBtn.BackgroundColor3    = Color3.fromRGB(15, 0, 0)
 FloatBtn.Visible             = false
@@ -279,6 +366,341 @@ UserInputService.InputEnded:Connect(function(input)
 	end
 end)
 
+
+-- ==================== FLOATING ACTION BUTTONS ====================
+local floatingButtons = {}
+local floatingDragState = nil
+local floatingActionDebounce = {}
+local FLOATING_ACTION_DEBOUNCE = 0.45
+
+-- Reserva uma área para o thumbstick móvel no canto inferior esquerdo.
+local function ClampFloatingToSafeArea(position)
+    local vp = GetViewportSize()
+    local halfW = FLOATING_BUTTON_SIZE.X * 0.5
+    local halfH = FLOATING_BUTTON_SIZE.Y * 0.5
+    local x = math.clamp(position.X, halfW + UI_SAFE_MARGIN, vp.X - halfW - UI_SAFE_MARGIN)
+    local y = math.clamp(position.Y, halfH + UI_SAFE_MARGIN, vp.Y - halfH - UI_SAFE_MARGIN)
+    -- Zona reservada para o analógico do mobile (canto inferior esquerdo)
+    if x < 230 and y > vp.Y - 220 then
+        x = 230
+        y = math.min(y, vp.Y - 230)
+    end
+    return Vector2.new(x, y)
+end
+
+local function GetFloatingInitialPosition(side)
+    local vp = GetViewportSize()
+    local mainPos = mainWrapper.AbsolutePosition
+    local mainSize = mainWrapper.AbsoluteSize
+
+    if mainSize.X <= 0 or mainSize.Y <= 0 then
+        mainPos = Vector2.new(vp.X * 0.5 - 320, vp.Y * 0.5 - 180)
+        mainSize = Vector2.new(640, 360)
+    end
+
+    local halfW = FLOATING_BUTTON_SIZE.X * 0.5
+    local halfH = FLOATING_BUTTON_SIZE.Y * 0.5
+    local centerY = mainPos.Y + mainSize.Y * 0.5
+
+    local centerX
+    if side == "right" then
+        centerX = mainPos.X + mainSize.X + FLOATING_GAP + halfW
+    else
+        centerX = mainPos.X - FLOATING_GAP - halfW
+    end
+
+    local safePosition = ClampFloatingToSafeArea(Vector2.new(centerX, centerY))
+    return UDim2.fromOffset(safePosition.X, safePosition.Y)
+end
+
+local function SetFloatingButtonPosition(button, position)
+    if button and button.Parent then
+        button.Position = position
+    end
+end
+
+local function SetupFloatingDrag(inputObject, root)
+    inputObject.Active = true
+
+    inputObject.InputBegan:Connect(function(input)
+        if input.UserInputType ~= Enum.UserInputType.MouseButton1
+            and input.UserInputType ~= Enum.UserInputType.Touch then
+            return
+        end
+        if floatingDragState then return end
+
+        floatingDragState = {
+            root = root,
+            input = input,
+            inputType = input.UserInputType,
+            startInputPosition = input.Position,
+            startButtonPosition = root.Position,
+            dragging = false,
+        }
+    end)
+end
+
+UserInputService.InputChanged:Connect(function(input)
+    local state = floatingDragState
+    if not state or not state.root or not state.root.Parent then return end
+
+    local shouldMove
+    if state.inputType == Enum.UserInputType.MouseButton1 then
+        shouldMove = input.UserInputType == Enum.UserInputType.MouseMovement
+    else
+        shouldMove = input.UserInputType == Enum.UserInputType.Touch
+    end
+    if not shouldMove then return end
+
+    local delta = input.Position - state.startInputPosition
+    if delta.Magnitude > 5 then state.dragging = true end
+
+    local vp = GetViewportSize()
+    local startX = state.startButtonPosition.X.Offset + vp.X * state.startButtonPosition.X.Scale
+    local startY = state.startButtonPosition.Y.Offset + vp.Y * state.startButtonPosition.Y.Scale
+    local safePosition = ClampFloatingToSafeArea(Vector2.new(startX + delta.X, startY + delta.Y))
+    SetFloatingButtonPosition(state.root, UDim2.fromOffset(safePosition.X, safePosition.Y))
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    local state = floatingDragState
+    if not state or input ~= state.input then return end
+
+    local root = state.root
+    local wasDragging = state.dragging
+    local buttonKey = root and root:GetAttribute("FloatingButtonKey")
+    floatingDragState = nil
+
+    if not wasDragging and root and root.Parent then
+        local action = floatingButtons[buttonKey]
+        local now = os.clock()
+        local last = floatingActionDebounce[buttonKey] or 0
+
+        -- Proteção contra toque duplo/acidental no mobile. Um único toque
+        -- gera no máximo uma ação dentro desta pequena janela.
+        if action and action.callback and (now - last) >= FLOATING_ACTION_DEBOUNCE then
+            floatingActionDebounce[buttonKey] = now
+            task.spawn(action.callback)
+        end
+    end
+end)
+
+function CreateFloatingButton(buttonKey, text, side, callback)
+    local existing = floatingButtons[buttonKey]
+    if existing and existing.root and existing.root.Parent then
+        if existing.destroyTween then
+            pcall(function() existing.destroyTween:Cancel() end)
+            existing.destroyTween = nil
+        end
+        existing.destroying = false
+        existing.callback = callback
+        existing.root.Visible = true
+
+        TweenService:Create(
+            existing.root,
+            TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {GroupTransparency = 0}
+        ):Play()
+
+        if existing.scale then
+            TweenService:Create(
+                existing.scale,
+                TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+                {Scale = 1}
+            ):Play()
+        end
+
+        return existing.root
+    end
+
+    floatingButtons[buttonKey] = nil
+
+    local root = Instance.new("CanvasGroup")
+    root.Name = buttonKey .. "Button"
+    root:SetAttribute("FloatingButtonKey", buttonKey)
+    root.AnchorPoint = Vector2.new(0.5, 0.5)
+    root.Size = UDim2.fromOffset(FLOATING_BUTTON_SIZE.X, FLOATING_BUTTON_SIZE.Y)
+    root.Position = GetFloatingInitialPosition(side)
+    root.BackgroundTransparency = 1
+    root.GroupTransparency = 1
+    root.ZIndex = 80
+    root.Parent = screenGui
+
+    local button = Instance.new("TextButton")
+    button.Name = "Action"
+    button.Size = UDim2.fromScale(1, 1)
+    button.BackgroundColor3 = Color3.fromRGB(18, 2, 4)
+    button.BackgroundTransparency = 0.42
+    button.BorderSizePixel = 0
+    button.AutoButtonColor = false
+    button.Text = text
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = 17
+    button.Font = Enum.Font.GothamBold
+    button.ZIndex = 81
+    button.Parent = root
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 14)
+    corner.Parent = button
+
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+    -- Uma única borda interna. Evita as pontas vermelhas que apareciam
+    -- para fora do arredondamento do botão em telas móveis.
+    root.ClipsDescendants = true
+    button.ClipsDescendants = true
+    local rootCorner = Instance.new("UICorner")
+    rootCorner.CornerRadius = UDim.new(0, 14)
+    rootCorner.Parent = root
+
+    -- O AUTO SHOOT não usa UIStroke: o stroke vermelho era o responsável
+    -- pelas pontas/bordas escapando para fora em alguns aparelhos móveis.
+    if buttonKey ~= "AutoShoot" then
+        local stroke = Instance.new("UIStroke")
+        stroke.Name = "CleanBorder"
+        stroke.Thickness = 1
+        stroke.Transparency = 0.18
+        stroke.Color = Color3.fromRGB(150, 20, 28)
+        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        stroke.Parent = button
+    end
+
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 55, 65)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(145, 0, 12)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 0, 7)),
+    })
+    gradient.Rotation = 45
+    gradient.Parent = button
+
+    local scale = Instance.new("UIScale")
+    scale.Scale = 0.88
+    scale.Parent = root
+
+    floatingButtons[buttonKey] = {
+        root = root,
+        gradient = gradient,
+        callback = callback,
+        scale = scale,
+        destroying = false,
+        destroyTween = nil,
+    }
+
+    SetupFloatingDrag(button, root)
+
+    task.spawn(function()
+        local rotation = 45
+        while root.Parent and floatingButtons[buttonKey] and floatingButtons[buttonKey].root == root do
+            rotation = (rotation + 1.5) % 360
+            if gradient and gradient.Parent then gradient.Rotation = rotation end
+            task.wait(0.03)
+        end
+    end)
+
+    TweenService:Create(
+        root,
+        TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {GroupTransparency = 0}
+    ):Play()
+
+    TweenService:Create(
+        scale,
+        TweenInfo.new(0.38, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+        {Scale = 1}
+    ):Play()
+
+    return root
+end
+
+function DestroyFloatingButton(buttonKey)
+    local data = floatingButtons[buttonKey]
+    if not data or data.destroying then return end
+
+    local root = data.root
+    if not root or not root.Parent then
+        floatingButtons[buttonKey] = nil
+        return
+    end
+
+    data.destroying = true
+    floatingActionDebounce[buttonKey] = nil
+
+    if floatingDragState and floatingDragState.root == root then
+        floatingDragState = nil
+    end
+
+    local scale = data.scale
+    local fade = TweenService:Create(
+        root,
+        TweenInfo.new(0.20, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {GroupTransparency = 1}
+    )
+    local shrink = scale and TweenService:Create(
+        scale,
+        TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {Scale = 0.88}
+    )
+
+    data.destroyTween = fade
+    fade:Play()
+    if shrink then shrink:Play() end
+
+    fade.Completed:Connect(function()
+        if floatingButtons[buttonKey] ~= data then return end
+
+        floatingButtons[buttonKey] = nil
+        if root and root.Parent then
+            root:Destroy()
+        end
+    end)
+end
+
+local function SyncFloatingButton(configKey)
+    if configKey == "AutoShoot" then
+        if Configs[configKey] then
+            CreateFloatingButton(
+                "AutoShoot",
+                "AUTO SHOOT",
+                "right",
+                function()
+                    if _G.AkatCallbacks and type(_G.AkatCallbacks.AutoShootOnce) == "function" then
+                        task.spawn(function()
+                            pcall(_G.AkatCallbacks.AutoShootOnce)
+                        end)
+                    end
+                end
+            )
+        else
+            DestroyFloatingButton("AutoShoot")
+        end
+    end
+end
+
+_G.AkatUIShutdown = function()
+    if floatingDragState then
+        floatingDragState = nil
+    end
+
+    for key, data in pairs(floatingButtons) do
+        if data and data.root then
+            pcall(function()
+                if data.root.Parent then
+                    data.root:Destroy()
+                end
+            end)
+        end
+        floatingButtons[key] = nil
+    end
+
+    pcall(function()
+        if screenGui and screenGui.Parent then
+            screenGui:Destroy()
+        end
+    end)
+end
+
 -- ==================== ESTRUTURA UNIFICADA DA JANELA ====================
 local Shadow               = Instance.new("ImageLabel", mainFrame)
 Shadow.Name                = "WindowShadow"
@@ -287,8 +709,8 @@ Shadow.Position            = UDim2.new(0, -12, 0, -12)
 Shadow.Size                = UDim2.new(1, 24, 1, 24)
 Shadow.BackgroundTransparency = 1
 Shadow.Image               = "rbxassetid://5554831957"
-Shadow.ImageColor3         = Color3.fromRGB(0, 0, 0)
-Shadow.ImageTransparency   = 0.45
+Shadow.ImageColor3         = Color3.fromRGB(5, 0, 1)
+Shadow.ImageTransparency   = 0.40
 Shadow.ScaleType           = Enum.ScaleType.Slice
 Shadow.SliceCenter         = Rect.new(36, 36, 114, 114)
 Shadow.ZIndex              = 3
@@ -443,9 +865,9 @@ TabsContainer.BackgroundTransparency = 1
 TabsContainer.BorderSizePixel = 0
 TabsContainer.ZIndex       = 10
 TabsContainer.CanvasSize   = UDim2.new(0, 0, 0, 0)
-TabsContainer.ScrollBarThickness = 3
+TabsContainer.ScrollBarThickness = 2
 TabsContainer.ScrollBarImageColor3 = Color3.fromRGB(200, 50, 50)
-TabsContainer.ScrollBarImageTransparency = 0.2
+TabsContainer.ScrollBarImageTransparency = 0.45
 TabsContainer.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
 
 local TabsLayout           = Instance.new("UIListLayout", TabsContainer)
@@ -462,12 +884,10 @@ end
 TabsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateTabsCanvas)
 TabsContainer:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateTabsCanvas)
 
--- ==================== ACTIVEBAR REUTILIZÁVEL (CORRIGIDA) ====================
--- Criamos um contêiner com ClipsDescendants para impedir que a ActiveBar
--- vaze por cima da barra de pesquisa e do perfil.
+-- ==================== ACTIVEBAR REUTILIZÁVEL ====================
 local ActiveBarContainer   = Instance.new("Frame", LeftPanel)
 ActiveBarContainer.Name    = "ActiveBarContainer"
-ActiveBarContainer.Size    = UDim2.new(1, -8, 1, -152) -- Mesmo tamanho e local do TabsContainer
+ActiveBarContainer.Size    = UDim2.new(1, -8, 1, -152)
 ActiveBarContainer.Position = UDim2.new(0, 4, 0, 87)
 ActiveBarContainer.BackgroundTransparency = 1
 ActiveBarContainer.ClipsDescendants = true
@@ -477,13 +897,16 @@ local sharedActiveBar      = Instance.new("Frame", ActiveBarContainer)
 sharedActiveBar.Name       = "SharedActiveBar"
 sharedActiveBar.AnchorPoint = Vector2.new(0, 0.5)
 sharedActiveBar.Size       = UDim2.new(0, 3, 0, 22)
-sharedActiveBar.Position   = UDim2.new(0, 7, 0, 0) -- 11 absoluto - 4 do container
+sharedActiveBar.Position   = UDim2.new(0, 7, 0, 0)
 sharedActiveBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 sharedActiveBar.BorderSizePixel = 0
 sharedActiveBar.Visible    = false
 sharedActiveBar.ZIndex     = 8
 sharedActiveBar.ClipsDescendants = false
 Instance.new("UICorner", sharedActiveBar).CornerRadius = UDim.new(1, 0)
+
+local activeBarScale = Instance.new("UIScale", sharedActiveBar)
+activeBarScale.Scale = 1
 
 local sharedBarGrad        = Instance.new("UIGradient", sharedActiveBar)
 sharedBarGrad.Rotation     = 90
@@ -683,7 +1106,7 @@ badgeStrokeGrad.Color      = ColorSequence.new({
 local BadgeText            = Instance.new("TextLabel", BadgeFrame)
 BadgeText.Size             = UDim2.new(1, 0, 1, 0)
 BadgeText.BackgroundTransparency = 1
-BadgeText.Text             = "V3.6"
+BadgeText.Text             = "V4.0"
 BadgeText.TextColor3       = Color3.fromRGB(255, 255, 255)
 BadgeText.Font             = Enum.Font.GothamBold
 BadgeText.TextSize         = 8.5
@@ -699,9 +1122,9 @@ togglesContainer.BackgroundTransparency = 0.7
 togglesContainer.BorderSizePixel = 0
 togglesContainer.ClipsDescendants = true
 togglesContainer.ZIndex    = 10
-togglesContainer.ScrollBarThickness = 3
+togglesContainer.ScrollBarThickness = 2
 togglesContainer.ScrollBarImageColor3 = Color3.fromRGB(220, 30, 40)
-togglesContainer.ScrollBarImageTransparency = 0
+togglesContainer.ScrollBarImageTransparency = 0.35
 togglesContainer.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
 togglesContainer.AutomaticCanvasSize = Enum.AutomaticSize.None
 Instance.new("UICorner", togglesContainer).CornerRadius = UDim.new(0, 8)
@@ -834,12 +1257,12 @@ AplicarFadeSincronizado(confirmCard, true, 0)
 -- ==================== RENDERSTEP UNIFICADO ====================
 RunService.RenderStepped:Connect(function()
 	local t = os.clock()
-	SingleRedGrad.Rotation    = (t * 12)  % 360
-	confStrokeGrad.Rotation   = (t * 15)  % 360
-	uGrad.Rotation            = (t * 60)  % 360
-	avGrad.Rotation           = (t * 60)  % 360
-	badgeGrad.Rotation        = (t * 10)  % 360
-	badgeStrokeGrad.Rotation  = (t * 10)  % 360
+	SingleRedGrad.Rotation   = 90 + math.sin(t * 0.55) * 28
+	confStrokeGrad.Rotation  = 90 + math.sin(t * 0.70) * 25
+	uGrad.Rotation           = 45 + math.sin(t * 0.80) * 35
+	avGrad.Rotation          = 45 + math.sin(t * 0.80) * 35
+	badgeGrad.Rotation       = 45 + math.sin(t * 0.45) * 20
+	badgeStrokeGrad.Rotation = 45 + math.sin(t * 0.45) * 20
 end)
 
 -- ==================== SISTEMA DE NOTIFICAÇÃO (STACK / FILA) ====================
@@ -870,6 +1293,9 @@ local function CriarNotificacao(titulo, descricao, iconeId)
 	notifHolder.BackgroundTransparency = 1
 	notifHolder.ZIndex             = 200
 	notifHolder.ClipsDescendants   = false
+
+	local notifScale = Instance.new("UIScale", notifHolder)
+	notifScale.Scale = 0.96
 
 	local notifCard                = Instance.new("Frame", notifHolder)
 	notifCard.Name                 = "NotifCard"
@@ -1001,8 +1427,11 @@ local function CriarNotificacao(titulo, descricao, iconeId)
 	table.insert(ActiveNotifications, 1, notifHolder)
 	UpdateNotifications()
 
-	TweenService:Create(notifHolder, TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
+	TweenService:Create(notifHolder, TweenInfo.new(0.30, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
 		Position = UDim2.new(1, -20, 1, -24)
+	}):Play()
+	TweenService:Create(notifScale, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+		Scale = 1
 	}):Play()
 
 	local dismissed = false
@@ -1018,6 +1447,9 @@ local function CriarNotificacao(titulo, descricao, iconeId)
 			Position = UDim2.new(1, 360, notifHolder.Position.Y.Scale, notifHolder.Position.Y.Offset)
 		}):Play()
 		TweenService:Create(notifCard, slideOut, {BackgroundTransparency = 1}):Play()
+		TweenService:Create(notifScale, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			Scale = 0.96
+		}):Play()
 		task.delay(0.28, function()
 			if notifHolder and notifHolder.Parent then notifHolder:Destroy() end
 		end)
@@ -1039,6 +1471,9 @@ local function CriarNotificacaoLinkCopiado(texto, iconeId)
 	notifHolder.BackgroundTransparency = 1
 	notifHolder.ZIndex             = 200
 	notifHolder.ClipsDescendants   = false
+
+	local notifScale = Instance.new("UIScale", notifHolder)
+	notifScale.Scale = 0.96
 
 	local notifCard                = Instance.new("Frame", notifHolder)
 	notifCard.Name                 = "NotifCard"
@@ -1176,8 +1611,11 @@ local function CriarNotificacaoLinkCopiado(texto, iconeId)
 	table.insert(ActiveNotifications, 1, notifHolder)
 	UpdateNotifications()
 
-	TweenService:Create(notifHolder, TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
+	TweenService:Create(notifHolder, TweenInfo.new(0.30, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
 		Position = UDim2.new(1, -20, 1, -24)
+	}):Play()
+	TweenService:Create(notifScale, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+		Scale = 1
 	}):Play()
 
 	local dismissed = false
@@ -1193,6 +1631,9 @@ local function CriarNotificacaoLinkCopiado(texto, iconeId)
 			Position = UDim2.new(1, 360, notifHolder.Position.Y.Scale, notifHolder.Position.Y.Offset)
 		}):Play()
 		TweenService:Create(notifCard, slideOut, {BackgroundTransparency = 1}):Play()
+		TweenService:Create(notifScale, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			Scale = 0.96
+		}):Play()
 		task.delay(0.28, function()
 			if notifHolder and notifHolder.Parent then notifHolder:Destroy() end
 		end)
@@ -1214,6 +1655,9 @@ local function CriarNotificacaoDiscord()
 	notifHolder.BackgroundTransparency = 1
 	notifHolder.ZIndex             = 200
 	notifHolder.ClipsDescendants   = false
+
+	local notifScale = Instance.new("UIScale", notifHolder)
+	notifScale.Scale = 0.96
 
 	local notifCard                = Instance.new("Frame", notifHolder)
 	notifCard.Name                 = "NotifCard"
@@ -1364,8 +1808,11 @@ local function CriarNotificacaoDiscord()
 	table.insert(ActiveNotifications, 1, notifHolder)
 	UpdateNotifications()
 
-	TweenService:Create(notifHolder, TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
+	TweenService:Create(notifHolder, TweenInfo.new(0.30, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
 		Position = UDim2.new(1, -20, 1, -24)
+	}):Play()
+	TweenService:Create(notifScale, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+		Scale = 1
 	}):Play()
 
 	local dismissed = false
@@ -1381,6 +1828,9 @@ local function CriarNotificacaoDiscord()
 			Position = UDim2.new(1, 360, notifHolder.Position.Y.Scale, notifHolder.Position.Y.Offset)
 		}):Play()
 		TweenService:Create(notifCard, slideOut, {BackgroundTransparency = 1}):Play()
+		TweenService:Create(notifScale, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			Scale = 0.96
+		}):Play()
 		task.delay(0.28, function()
 			if notifHolder and notifHolder.Parent then notifHolder:Destroy() end
 		end)
@@ -1425,7 +1875,7 @@ local function filterToggles(currentActiveTab, query)
 				task.delay(delay, function()
 					if not child or not child.Parent then return end
 					TweenService:Create(child, TweenInfo.new(0.2, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-						Size = UDim2.new(1, -10, 0, 60), BackgroundTransparency = 0.45
+						Size = UDim2.new(1, -10, 0, child:GetAttribute("ItemHeight") or 60), BackgroundTransparency = 0.45
 					}):Play()
 					if t then TweenService:Create(t, TweenInfo.new(0.15), {TextTransparency = 0}):Play() end
 					if d then TweenService:Create(d, TweenInfo.new(0.15), {TextTransparency = 0}):Play() end
@@ -1450,7 +1900,7 @@ local function UpdateActiveBarPosition(animar)
 
 		local btnAbsSize = targetBtn.AbsoluteSize.Y
 		local btnAbsPos  = targetBtn.AbsolutePosition.Y
-		local panelAbsY  = ActiveBarContainer.AbsolutePosition.Y -- Agora pegando a posição relativa ao Container!
+		local panelAbsY  = ActiveBarContainer.AbsolutePosition.Y
 
 		if (btnAbsSize == 0 or btnAbsPos == 0 or panelAbsY == 0) and deferCount < MAX_DEFER then
 			task.defer(aplicar)
@@ -1461,11 +1911,22 @@ local function UpdateActiveBarPosition(animar)
 		local targetYPos    = targetCenterY - panelAbsY
 
 		if animar then
-			TweenService:Create(sharedActiveBar, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-				Position = UDim2.new(0, 7, 0, targetYPos)
-			}):Play()
+			local moveTween = TweenService:Create(
+				sharedActiveBar,
+				TweenInfo.new(0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+				{Position = UDim2.new(0, 7, 0, targetYPos)}
+			)
+			moveTween:Play()
+
+			activeBarScale.Scale = 1.08
+			TweenService:Create(
+				activeBarScale,
+				TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+				{Scale = 1}
+			):Play()
 		else
 			sharedActiveBar.Position = UDim2.new(0, 7, 0, targetYPos)
+			activeBarScale.Scale = 1
 		end
 	end
 
@@ -1555,8 +2016,84 @@ local function createTabBtn(tabName)
 	tabLabel.Text              = UI_TEXT.Tabs[tabName] or tabName
 	tabLabel.ZIndex            = 12
 
+	local tabScale = Instance.new("UIScale", tabBtn)
+	tabScale.Scale = 1
+
+	tabBtn.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			TweenService:Create(tabScale, TweenInfo.new(0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = 0.97}):Play()
+		end
+	end)
+
+	tabBtn.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			TweenService:Create(tabScale, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
+		end
+	end)
+
 	tabBtn.MouseButton1Click:Connect(function() selectTab(tabName) end)
 	tabButtons[tabName] = tabBtn
+end
+
+-- ==================== CRIAR AÇÃO DE CLIQUE ====================
+-- Ações de teleporte não ficam ligadas: cada toque executa uma vez.
+local function createAction(parent, configKey, tabCategory)
+    local frame = Instance.new("Frame")
+    frame.Name = configKey .. "Action"
+    frame.Size = UDim2.new(1, -10, 0, 42)
+    frame.BackgroundColor3 = Color3.fromRGB(15, 5, 5)
+    frame.BackgroundTransparency = 0.45
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 11
+    frame.ClipsDescendants = true
+    frame.LayoutOrder = ({TpMurder=1, TpSheriff=2, TpLobby=3})[configKey] or 10
+    frame:SetAttribute("Tab", tabCategory)
+    frame:SetAttribute("ConfigKey", configKey)
+    frame.Parent = parent
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+
+    local title = Instance.new("TextLabel", frame)
+    title.Name = "Title"
+    title.Size = UDim2.new(1, -62, 1, 0)
+    title.Position = UDim2.new(0, 12, 0, 0)
+    title.BackgroundTransparency = 1
+    title.TextColor3 = Color3.fromRGB(220, 220, 220)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 13
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Text = (UI_TEXT.Options[configKey] and UI_TEXT.Options[configKey].Title) or configKey
+    title.ZIndex = 12
+
+    local indicator = Instance.new("ImageLabel", frame)
+    indicator.Name = "ActionIndicator"
+    indicator.AnchorPoint = Vector2.new(1, 0.5)
+    indicator.Position = UDim2.new(1, -12, 0.5, 0)
+    indicator.Size = UDim2.fromOffset(20, 20)
+    indicator.BackgroundTransparency = 1
+    indicator.Image = "rbxthumb://type=Asset&id=130879985308294&w=150&h=150"
+    indicator.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    indicator.ZIndex = 12
+
+    local hit = Instance.new("TextButton", frame)
+    hit.Name = "Action"
+    hit.Size = UDim2.fromScale(1, 1)
+    hit.BackgroundTransparency = 1
+    hit.Text = ""
+    hit.AutoButtonColor = false
+    hit.ZIndex = 13
+    hit.MouseButton1Click:Connect(function()
+        PlayUI_Click()
+        local cb = _G.AkatCallbacks and _G.AkatCallbacks[configKey]
+        if type(cb) == "function" then
+            task.spawn(function() pcall(cb, true) end)
+        end
+        local pulse = TweenService:Create(frame, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, true), {BackgroundTransparency = 0.18})
+        pulse:Play()
+    end)
+
+    return frame
 end
 
 -- ==================== CRIAR TOGGLE ====================
@@ -1568,6 +2105,9 @@ local function createToggle(parent, configKey, tabCategory)
 	toggleFrame.BackgroundTransparency = 0.45
 	toggleFrame.ZIndex             = 11
 	toggleFrame.ClipsDescendants   = true
+	if tabCategory == "Teleports" then
+		toggleFrame.LayoutOrder = ({TpToGun=10, SafeSpot=11})[configKey] or 20
+	end
 	toggleFrame:SetAttribute("Tab",       tabCategory)
 	toggleFrame:SetAttribute("ConfigKey", configKey)
 	toggleFrame.Parent             = parent
@@ -1631,10 +2171,9 @@ local function createToggle(parent, configKey, tabCategory)
 		local anim        = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		TweenService:Create(switchCircle, anim, {Position = targetPos}):Play()
 		TweenService:Create(switchTrack,  anim, {BackgroundColor3 = targetColor}):Play()
-		toggleScale.Scale = 0.96
-		TweenService:Create(toggleScale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = 1}):Play()
+		toggleScale.Scale = 0.97
+		TweenService:Create(toggleScale, TweenInfo.new(0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Scale = 1}):Play()
 
-		-- ==================== INTEGRAÇÃO COM BACKEND ====================
 		if _G.AkatCallbacks and type(_G.AkatCallbacks[configKey]) == "function" then
 			local success, err = pcall(function()
 				_G.AkatCallbacks[configKey](Configs[configKey])
@@ -1645,7 +2184,195 @@ local function createToggle(parent, configKey, tabCategory)
 		else
 			warn("[AKAT UI] Callback not found: " .. tostring(configKey))
 		end
-		-- ==================== FIM DA INTEGRAÇÃO ====================
+		SyncFloatingButton(configKey)
+	end)
+end
+
+-- ==================== TOGGLE COMPACTO ====================
+local function createCompactToggle(parent, configKey, tabCategory)
+    local frame = Instance.new("Frame")
+    frame.Name = configKey
+    frame.Size = UDim2.new(1, -10, 0, 42)
+    frame.BackgroundColor3 = Color3.fromRGB(15, 5, 5)
+    frame.BackgroundTransparency = 0.45
+    frame.ZIndex = 11
+    frame.ClipsDescendants = true
+    frame:SetAttribute("Tab", tabCategory)
+    frame:SetAttribute("ConfigKey", configKey)
+    frame:SetAttribute("ItemHeight", 42)
+    frame.Parent = parent
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+
+    local title = Instance.new("TextLabel", frame)
+    title.Size = UDim2.new(1, -78, 1, 0)
+    title.Position = UDim2.fromOffset(12, 0)
+    title.BackgroundTransparency = 1
+    title.TextColor3 = Color3.fromRGB(210,210,210)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 13
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.TextYAlignment = Enum.TextYAlignment.Center
+    title.Text = (UI_TEXT.Options[configKey] and UI_TEXT.Options[configKey].Title) or configKey
+    title.ZIndex = 12
+
+    local track = Instance.new("Frame", frame)
+    track.Size = UDim2.fromOffset(42, 22)
+    track.Position = UDim2.new(1, -52, 0.5, -11)
+    track.BackgroundColor3 = Configs[configKey] and Color3.fromHex("#8B0000") or Color3.fromRGB(30,30,30)
+    track.ZIndex = 12
+    Instance.new("UICorner", track).CornerRadius = UDim.new(1,0)
+
+    local circle = Instance.new("Frame", track)
+    circle.Size = UDim2.fromOffset(16,16)
+    circle.Position = Configs[configKey] and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)
+    circle.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    circle.ZIndex = 13
+    Instance.new("UICorner", circle).CornerRadius = UDim.new(1,0)
+
+    local hit = Instance.new("TextButton", frame)
+    hit.Size = UDim2.fromScale(1,1)
+    hit.BackgroundTransparency = 1
+    hit.Text = ""
+    hit.ZIndex = 14
+    hit.MouseButton1Click:Connect(function()
+        PlayUI_Click()
+        Configs[configKey] = not Configs[configKey]
+        local on = Configs[configKey]
+        TweenService:Create(circle, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = on and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)}):Play()
+        TweenService:Create(track, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = on and Color3.fromHex("#8B0000") or Color3.fromRGB(30,30,30)}):Play()
+        if _G.AkatCallbacks and type(_G.AkatCallbacks[configKey]) == "function" then
+            pcall(function() _G.AkatCallbacks[configKey](on) end)
+        end
+    end)
+end
+
+-- ==================== CRIAR SLIDER NUMÉRICO COMPACTO ====================
+local function createCompactSlider(parent, configKey, tabCategory, minValue, maxValue, defaultValue)
+	local frame = Instance.new("Frame")
+	frame.Name  = configKey
+	frame.Size  = UDim2.new(1, -10, 0, 42)
+	frame.BackgroundColor3 = Color3.fromRGB(15, 5, 5)
+	frame.BackgroundTransparency = 0.45
+	frame.ZIndex = 11
+	frame.ClipsDescendants = true
+	frame:SetAttribute("Tab",       tabCategory)
+	frame:SetAttribute("ConfigKey", configKey)
+	frame:SetAttribute("ItemHeight", 42)
+	frame.Parent = parent
+	local scale = Instance.new("UIScale", frame)
+	scale.Scale = 1
+	Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+
+	local optData = UI_TEXT.Options[configKey]
+	local titleLbl = Instance.new("TextLabel", frame)
+	titleLbl.Name  = "Title"
+	titleLbl.Size  = UDim2.new(0, 100, 1, 0)
+	titleLbl.Position = UDim2.new(0, 12, 0, 0)
+	titleLbl.BackgroundTransparency = 1
+	titleLbl.TextColor3 = Color3.fromRGB(210, 210, 210)
+	titleLbl.Font  = Enum.Font.GothamBold
+	titleLbl.TextSize = 13
+	titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+	titleLbl.TextYAlignment = Enum.TextYAlignment.Center
+	titleLbl.Text  = optData and optData.Title or configKey
+	titleLbl.ZIndex = 12
+
+	local track = Instance.new("Frame", frame)
+	track.Name  = "SliderTrack"
+	track.Size  = UDim2.new(1, -168, 0, 6)
+	track.Position = UDim2.new(0, 116, 0.5, -3)
+	track.BackgroundColor3 = Color3.fromRGB(45, 25, 27)
+	track.BorderSizePixel  = 0
+	track.ZIndex = 12
+	Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
+
+	local fill = Instance.new("Frame", track)
+	fill.Name  = "Fill"
+	fill.Size  = UDim2.new(0, 0, 1, 0)
+	fill.BackgroundColor3 = Color3.fromRGB(139, 0, 0)
+	fill.BorderSizePixel  = 0
+	fill.ZIndex = 13
+	Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+
+	local knob = Instance.new("Frame", track)
+	knob.Name  = "Knob"
+	knob.Size  = UDim2.fromOffset(14, 14)
+	knob.AnchorPoint = Vector2.new(0.5, 0.5)
+	knob.Position    = UDim2.new(0, 0, 0.5, 0)
+	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	knob.BorderSizePixel  = 0
+	knob.ZIndex = 14
+	Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+	local valueLabel = Instance.new("TextLabel", frame)
+	valueLabel.Name  = "Value"
+	valueLabel.Size  = UDim2.fromOffset(46, 22)
+	valueLabel.AnchorPoint = Vector2.new(1, 0.5)
+	valueLabel.Position    = UDim2.new(1, -10, 0.5, 0)
+	valueLabel.BackgroundTransparency = 1
+	valueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	valueLabel.Font  = Enum.Font.GothamBold
+	valueLabel.TextSize = 15
+	valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+	valueLabel.ZIndex = 13
+
+	local hit = Instance.new("TextButton", frame)
+	hit.Name  = "SliderHitbox"
+	hit.Size  = UDim2.new(1, -148, 0, 30)
+	hit.Position = UDim2.new(0, 110, 0.5, -15)
+	hit.BackgroundTransparency = 1
+	hit.Text  = ""
+	hit.AutoButtonColor = false
+	hit.ZIndex = 15
+
+	local value   = tonumber(defaultValue) or tonumber(Configs[configKey .. "Value"]) or minValue
+	value = math.clamp(value, minValue, maxValue)
+	local dragging = false
+
+	local function setValue(v, notify)
+		value = math.clamp(v, minValue, maxValue)
+		local alpha = (value - minValue) / (maxValue - minValue)
+		valueLabel.Text = (configKey == "Speed" or configKey == "JumpPower")
+			and string.format("%.1f", value)
+			or  string.format("%.0f", value)
+		fill.Size = UDim2.new(alpha, 0, 1, 0)
+		knob.Position = UDim2.new(alpha, 0, 0.5, 0)
+		Configs[configKey .. "Value"] = value
+		Configs[configKey] = true
+		if notify and _G.AkatCallbacks and type(_G.AkatCallbacks[configKey]) == "function" then
+			local ok, err = pcall(function() _G.AkatCallbacks[configKey](value) end)
+			if not ok then warn("[AKAT UI] Slider callback failed for " .. tostring(configKey) .. ": " .. tostring(err)) end
+		end
+	end
+
+	local function updateFromInput(input)
+		local x     = input.Position.X
+		local left  = track.AbsolutePosition.X
+		local width = math.max(1, track.AbsoluteSize.X)
+		local alpha = math.clamp((x - left) / width, 0, 1)
+		local v     = minValue + (maxValue - minValue) * alpha
+		setValue(math.floor(v * 10 + 0.5) / 10, true)
+	end
+
+	setValue(value, false)
+
+	hit.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch) then
+			updateFromInput(input)
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
 	end)
 end
 
@@ -1659,13 +2386,57 @@ searchTextBox:GetPropertyChangedSignal("Text"):Connect(function()
 	end)
 end)
 
+-- ==================== EXPAND RESPONSIVO ====================
+local function ApplyResponsiveWindowSize(animate)
+	local normalSize, expandedSize = GetResponsiveUISizes()
+	local targetSize = isExpanded and expandedSize or normalSize
+
+	if animate then
+		TweenService:Create(
+			mainWrapper,
+			TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+			{Size = targetSize}
+		):Play()
+	else
+		mainWrapper.Size = targetSize
+	end
+
+	task.defer(function()
+		ClampMainWrapperToViewport()
+	end)
+end
+
+local viewportConnection
+local function BindViewportResize()
+	if viewportConnection then
+		viewportConnection:Disconnect()
+		viewportConnection = nil
+	end
+
+	local camera = workspace.CurrentCamera
+	if not camera then return end
+
+	viewportConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+		if not mainWrapper or not mainWrapper.Parent then return end
+
+		ApplyResponsiveWindowSize(UIState == "OPEN")
+		ClampMainWrapperToViewport()
+		UpdateActiveBarPosition(false)
+		task.defer(UpdateCanvasSize)
+		task.defer(UpdateTabsCanvas)
+	end)
+end
+
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(BindViewportResize)
+BindViewportResize()
+
 -- ==================== EXPAND ====================
 ExpandBtn.MouseButton1Click:Connect(function()
 	PlayUI_Click()
 	if UIState ~= "OPEN" then return end
+
 	isExpanded = not isExpanded
-	local newSize = isExpanded and UDim2.new(0, 800, 0, 480) or UDim2.new(0, 640, 0, 360)
-	TweenService:Create(mainWrapper, TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = newSize}):Play()
+	ApplyResponsiveWindowSize(true)
 end)
 
 -- ==================== MÁQUINA DE ESTADOS DA UI ====================
@@ -1681,11 +2452,15 @@ SetUIState = function(newState)
 
 	if newState == "OPEN" then
 		mainWrapper.Visible = true
-		mainWrapper.Size    = UDim2.new(0, 480, 0, 260)
+		do
+			local normalSize = select(1, GetResponsiveUISizes())
+			mainWrapper.Size = normalSize
+		end
 		AplicarFadeSincronizado(mainWrapper, true, 0)
 		AplicarFadeSincronizado(mainWrapper, false, tempoAnim)
 
-		local targetSize = isExpanded and UDim2.new(0, 800, 0, 480) or UDim2.new(0, 640, 0, 360)
+		local normalSize, expandedSize = GetResponsiveUISizes()
+		local targetSize = isExpanded and expandedSize or normalSize
 		local openTween  = TweenService:Create(mainWrapper, windowAnim, {Size = targetSize})
 		openTween:Play()
 		openTween.Completed:Connect(function()
@@ -1698,7 +2473,13 @@ SetUIState = function(newState)
 
 	elseif newState == "MINIMIZED" or newState == "CLOSED" then
 		AplicarFadeSincronizado(mainWrapper, true, tempoAnim)
-		local closeTween = TweenService:Create(mainWrapper, windowAnim, {Size = UDim2.new(0, 480, 0, 260)})
+		local normalSize = select(1, GetResponsiveUISizes())
+		local vp = GetViewportSize()
+		local shrinkSize = UDim2.fromOffset(
+			math.min(NORMAL_UI_SIZE.X, math.max(1, vp.X - (UI_SAFE_MARGIN * 2))),
+			math.min(NORMAL_UI_SIZE.Y, math.max(1, vp.Y - (UI_SAFE_MARGIN * 2)))
+		)
+		local closeTween = TweenService:Create(mainWrapper, windowAnim, {Size = shrinkSize})
 		closeTween:Play()
 		closeTween.Completed:Connect(function()
 			mainWrapper.Visible = false
@@ -1778,18 +2559,39 @@ btnYes.MouseButton1Click:Connect(function()
 	AplicarFadeSincronizado(confirmCard, true, syncTime)
 	task.wait(syncTime)
 	pcall(function() confirmBlur:Destroy() end)
-	screenGui:Destroy()
+	if _G.AkatUIShutdown then
+		pcall(_G.AkatUIShutdown)
+	end
 end)
 
 -- ==================== HOVER NOS BOTÕES DO TOPO ====================
 local function AplicarEfeitoFisicoBotao(btn, icon, hoverColor)
+	local btnScale = Instance.new("UIScale", btn)
+	btnScale.Scale = 1
+
 	btn.MouseEnter:Connect(function()
 		if UIState ~= "OPEN" then return end
-		TweenService:Create(icon, TweenInfo.new(0.15), {ImageColor3 = hoverColor}):Play()
+		TweenService:Create(icon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = hoverColor}):Play()
 	end)
+
 	btn.MouseLeave:Connect(function()
 		if UIState ~= "OPEN" then return end
-		TweenService:Create(icon, TweenInfo.new(0.15), {ImageColor3 = TOP_BTN_COLOR}):Play()
+		TweenService:Create(icon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = TOP_BTN_COLOR}):Play()
+		TweenService:Create(btnScale, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = 1}):Play()
+	end)
+
+	btn.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			TweenService:Create(btnScale, TweenInfo.new(0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = 0.92}):Play()
+		end
+	end)
+
+	btn.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			TweenService:Create(btnScale, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
+		end
 	end)
 end
 
@@ -1809,15 +2611,34 @@ createTabBtn("Teleports")
 createTabBtn("Settings")
 
 -- ==================== CRIAR TOGGLES ====================
-createToggle(togglesContainer, "Speed",       "Player")
-createToggle(togglesContainer, "AntiFling",   "Player")
-createToggle(togglesContainer, "Aimbot",      "Combat")
-createToggle(togglesContainer, "Reach",       "Combat")
-createToggle(togglesContainer, "ESP",         "Visuals")
-createToggle(togglesContainer, "TpToGun",     "Teleports")
-createToggle(togglesContainer, "SafeSpot",    "Teleports")
-createToggle(togglesContainer, "AutoCollect", "Settings")
-createToggle(togglesContainer, "ChatRoles",   "Settings")
+-- Player
+createCompactSlider(togglesContainer, "Speed",      "Player", 16, 100, 16)
+createCompactSlider(togglesContainer, "JumpPower",  "Player", 50, 150, 50)
+createToggle(togglesContainer, "AntiFling",         "Player")
+createToggle(togglesContainer, "Invisibility",      "Player")
+
+-- Combat (KnifeThrow REMOVIDO)
+createToggle(togglesContainer, "AutoShoot",         "Combat")
+createCompactSlider(togglesContainer, "Reach",      "Combat", 1, 50, 5)
+createToggle(togglesContainer, "ViewReach",         "Combat")
+createToggle(togglesContainer, "KillAll",           "Combat")
+
+-- Visuals
+createToggle(togglesContainer, "ESP",               "Visuals")
+createToggle(togglesContainer, "Name",              "Visuals")
+createToggle(togglesContainer, "Tracer",            "Visuals")
+createToggle(togglesContainer, "XRay",              "Visuals")
+
+-- Teleports (ações de clique; Murderer/Sheriff/Lobby no topo)
+createAction(togglesContainer, "TpMurder",  "Teleports")
+createAction(togglesContainer, "TpSheriff", "Teleports")
+createAction(togglesContainer, "TpLobby",   "Teleports")
+createToggle(togglesContainer, "TpToGun",   "Teleports")
+createToggle(togglesContainer, "SafeSpot",  "Teleports")
+
+-- Settings
+createToggle(togglesContainer, "AutoFarm",          "Settings")
+createToggle(togglesContainer, "ChatRoles",         "Settings")
 
 -- ==================== ANIMAÇÃO DE INTRODUÇÃO ====================
 local function ExecutarIntroAkat()
@@ -1877,12 +2698,17 @@ local function ExecutarIntroAkat()
 	RegistrarTransparencias(mainWrapper)
 	for _, item in ipairs(mainWrapper:GetDescendants()) do RegistrarTransparencias(item) end
 
+	local introNormalSize = select(1, GetResponsiveUISizes())
+	mainWrapper.Size = introNormalSize
 	mainWrapper.Visible = true
 	FloatBtn.Visible    = true
 	UIState             = "OPEN"
 	isTransitioning     = false
 
+	local oldMainScale = mainWrapper:FindFirstChild("IntroMainScale")
+	if oldMainScale then oldMainScale:Destroy() end
 	local MainScale     = Instance.new("UIScale", mainWrapper)
+	MainScale.Name = "IntroMainScale"
 	MainScale.Scale     = 0.85
 	AplicarFadeSincronizado(mainWrapper, true, 0)
 	AplicarFadeSincronizado(mainWrapper, false, 0.35)
